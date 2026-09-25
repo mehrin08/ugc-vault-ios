@@ -60,6 +60,23 @@ https://thriving-macaron-6a97f3.netlify.app
 ### Version
 1.0.0 (Build 1)
 
+## Availability (App Store Connect → Pricing and Availability)
+Turn off **"Make available in all countries"** and select only these 18 countries:
+
+| Region | Countries |
+|---|---|
+| North America | United States, Canada |
+| English-speaking | United Kingdom, Ireland, Australia, New Zealand |
+| Western & Northern Europe | Germany, France, Netherlands, Belgium, Luxembourg, Austria, Switzerland, Sweden, Norway, Denmark, Finland, Iceland |
+
+Before the EU countries go live, finish the **EU trader status** step (App Store
+Connect → Business → Compliance). A subscription app counts as a "trader", and
+Apple shows the address, phone and email you enter on the EU App Store page.
+
+When the subscription is added, it defaults to these same countries. Apple
+converts your US price into each currency; review the list and round any odd
+prices (e.g. £5.99, €6.99, CA$8.99, A$9.99).
+
 ## App Privacy (App Store Connect → App Privacy)
 "Do you or your third-party partners collect data from this app?" → **Yes**. Then select:
 

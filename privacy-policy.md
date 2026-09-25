@@ -47,6 +47,25 @@ You can delete your account and all of its data at any time in the App:
 everything stored with it. You can also email ugcrims@gmail.com and we will
 delete it for you.
 
+## Your Rights (including UK, EU, Canada and Australia)
+Wherever you live, you can ask us to access, correct, export or delete your
+personal information by emailing ugcrims@gmail.com, and you can delete your
+account yourself in the App at any time. We reply within 30 days.
+
+If you are in the UK, EU/EEA or Switzerland: we process your information
+because it is needed to provide the App you signed up for (performance of a
+contract), and for reminders you turn on, based on your choice (consent), which
+you can withdraw at any time. Your information is stored and processed in the
+United States by our service providers under standard contractual safeguards.
+You also have the right to complain to your local data protection authority.
+
+If you are in Canada, we handle your information in line with PIPEDA and
+applicable provincial laws; in Australia, in line with the Australian Privacy
+Principles.
+
+We keep your information for as long as your account exists. When you delete
+your account, it is permanently removed from our database.
+
 ## Children's Privacy
 The App is not directed at children under 13, and we do not knowingly collect
 information from children.
