@@ -6,3 +6,6 @@ ios/App/DerivedData/
 .DS_Store
 *.xcuserstate
 xcuserdata/
+
+# Local Netlify folder
+.netlify
