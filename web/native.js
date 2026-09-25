@@ -10,8 +10,8 @@
  * Options on the script tag: data-bell="off" hides the floating reminders
  * button, data-first-run="off" skips the "turn on reminders" prompt.
  *
- * Task reminders: call these from the web app's own buttons (see
- * WEB-APP-NOTIFICATIONS.md). Every function is safe to call; outside the iOS
+ * Task reminders: web/index.html calls these (see its "iPhone app" section).
+ * Every function is safe to call; outside the iOS
  * app window.UGCVault.isApp is false and they resolve to null.
  *
  *   UGCVault.remind({ task: 'Roblox' })                   // asks when
