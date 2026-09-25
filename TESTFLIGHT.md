@@ -19,19 +19,17 @@ Every step below happens **on your Mac**. Apple only allows iOS builds to be sig
 
 ---
 
-## 1. Check `capacitor.config.ts`
+## 1. Put the privacy and support pages online
 
-Open it and confirm:
+Apple needs both as live web pages. They're ready in `netlify-pages/`:
 
-```ts
-appId: 'com.yourname.ugcvault',   // must be unique; this becomes your Bundle ID
-appName: 'UGC Vault',
-webDir: 'www',
-```
+1. Copy `netlify-pages/privacy.html` and `netlify-pages/support.html` into the folder you deploy to Netlify, next to its `index.html`.
+2. Redeploy. If you use drag-and-drop, go to Netlify → your site → **Deploys** and drag the whole folder in.
+3. Check that these links open:
+   - https://thriving-macaron-6a97f3.netlify.app/privacy.html
+   - https://thriving-macaron-6a97f3.netlify.app/support.html
 
-If it has a `server: { url: 'https://thriving-macaron-6a97f3.netlify.app' }` block, the app is only a wrapper around the website.
-Apple often rejects those under **Guideline 4.2 (Minimum Functionality)**. It's safer to remove that block and ship the built files in `www/`.
-Leaving it in is fine for TestFlight testing.
+Already set in `capacitor.config.ts`: Bundle ID `com.rims.ugcvault`, name **UGC Vault**, and the app loads your live Netlify site.
 
 ---
 
@@ -54,7 +52,7 @@ This runs `npm install`, `npx cap sync ios`, and opens Xcode.
 2. **Signing & Capabilities** tab:
    - Tick **Automatically manage signing**.
    - **Team**: pick your Apple Developer team. If it's not listed, go to Xcode → Settings → Accounts, add your Apple ID, then come back.
-   - **Bundle Identifier**: must match `appId` from step 1.
+   - **Bundle Identifier**: `com.rims.ugcvault`
 3. **General** tab:
    - **Version**: `1.0.0`
    - **Build**: `1`. Increase it on every upload (2, 3, 4…).
@@ -67,7 +65,7 @@ This runs `npm install`, `npx cap sync ios`, and opens Xcode.
 ## 4. Create the app in App Store Connect
 
 1. Go to https://appstoreconnect.apple.com → **Apps** → **+** → **New App**.
-2. Platform **iOS**, Name **UGC Vault** (it must be unique on the App Store), Language, the **Bundle ID** from step 1, SKU `ugcvault001`.
+2. Platform **iOS**, Name **UGC Vault** (it must be unique on the App Store), Language **English (U.S.)**, Bundle ID **com.rims.ugcvault**, SKU `ugcvault001`, User Access **Full Access**.
 3. If the Bundle ID isn't in the dropdown, register it first at
    https://developer.apple.com/account/resources/identifiers → **+** → App IDs → App, then reload.
 
@@ -79,12 +77,7 @@ This runs `npm install`, `npx cap sync ios`, and opens Xcode.
 2. Menu **Product → Archive**. This takes a few minutes.
 3. The Organizer window opens. Select the archive → **Distribute App** → **App Store Connect** → **Upload** → keep the defaults → **Upload**.
 4. After about 5–30 minutes, the build shows up in App Store Connect → your app → **TestFlight**.
-5. If you see **Missing Compliance**, click **Manage** and answer: *uses encryption?* → **None of the algorithms mentioned above** (standard HTTPS only).
-   To skip this question on future builds, add this to `ios/App/App/Info.plist`:
-   ```xml
-   <key>ITSAppUsesNonExemptEncryption</key>
-   <false/>
-   ```
+5. You shouldn't see **Missing Compliance**, because the prep script already sets `ITSAppUsesNonExemptEncryption = NO`. If it does appear, answer **None of the algorithms mentioned above**.
 
 ### Testers
 - **Internal testing** (up to 100 people on your team, no review): TestFlight → Internal Testing → **+** → add yourself → install the **TestFlight** app on your iPhone.
@@ -96,13 +89,15 @@ This runs `npm install`, `npx cap sync ios`, and opens Xcode.
 
 In App Store Connect → your app → **App Store** tab → version 1.0:
 
-- Paste the description, keywords, subtitle, and promo text from `app-store-listing.md`.
+Every field below is written out in `app-store-listing.md`, ready to copy and paste.
+
+- Description, keywords, subtitle, promo text, copyright.
 - **Screenshots**: upload the 6.9" set. Add 13" iPad screenshots too if the app supports iPad.
 - **Support URL** and **Privacy Policy URL**: both must be live web pages.
-- **App Privacy**: answer the data-collection questions to match `privacy-policy.md`.
+- **App Privacy**: **Data Not Collected**.
 - **Age Rating**: fill in the questionnaire.
 - **Build**: click **+** and choose the build you uploaded.
-- **App Review Information**: if the app has a login, give Apple a demo account.
+- **App Review Information**: no sign-in needed. Paste the review notes from the listing file.
 - Click **Add for Review** → **Submit**. Review usually takes 1–3 days.
 
 ---

@@ -1,14 +1,18 @@
 {
   "name": "ugc-vault-ios",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "private": true,
+  "description": "UGC Vault iOS app (Capacitor wrapper)",
+  "author": "Mehrin Reza Rim",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "ios:prepare": "./scripts/prepare-ios.sh",
+    "ios:sync": "cap sync ios",
+    "ios:open": "cap open ios"
+  },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",

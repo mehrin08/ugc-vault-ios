@@ -1,45 +1,94 @@
-# UGC Vault — App Store Listing Draft
+# UGC Vault — App Store Listing
 
-## App Name
-UGC Vault
+Copy and paste each field into App Store Connect. Character limits are in brackets.
 
-## Subtitle (30 char max)
-Your UGC business, organized
+## App Information (App Store Connect → App Information)
 
-## Category
-Business (primary) / Productivity (secondary)
+| Field | Value |
+|---|---|
+| Name [30] | UGC Vault |
+| Subtitle [30] | Your UGC business, organized |
+| Bundle ID | com.rims.ugcvault |
+| SKU | ugcvault001 |
+| Primary category | Business |
+| Secondary category | Productivity |
+| Content rights | Does not contain, show or access third-party content |
+| Age rating | 4+ (answer "None" / "No" to every questionnaire item) |
+| Privacy Policy URL | https://thriving-macaron-6a97f3.netlify.app/privacy.html |
 
-## Description
+## Version 1.0 (App Store tab)
+
+### Promotional Text [170]
+Run your UGC business from one screen: track brand deals, see what you've earned against your monthly goal, and batch content by client every week.
+
+### Description [4000]
 UGC Vault is a personal business dashboard built for content creators managing
 brand partnerships. Track active campaigns, monitor payments, and batch your
 content on a weekly checklist grouped by brand — all in one place.
 
-Features:
-- Monthly earnings-goal ring showing earned, in-pipeline, and to-go
-- Stat tiles for active campaigns, awaiting payment, and total brands
-- Weekly content-batching checklist grouped by client
-- Today's tasks and upcoming batch deadlines at a glance
+FEATURES
+• Monthly earnings-goal ring showing earned, in-pipeline, and to-go
+• Stat tiles for active campaigns, awaiting payment, and total brands
+• Weekly content-batching checklist grouped by client
+• Today's tasks and upcoming batch deadlines at a glance
+
+PRIVATE BY DESIGN
+No sign-up, no ads, no tracking. Your brand deals and earnings stay on your device.
 
 Built by a creator, for creators — no bloated CRM, just what you need to run
 a UGC business day to day.
 
-## Keywords (100 char max, comma-separated, no spaces after commas)
+### Keywords [100]
 ugc,content creator,brand deals,creator tools,campaign tracker,earnings tracker,batching,influencer
 
-## Support URL
-(use your portfolio or a dedicated support page — e.g. enchanting-taiyaki-3ebbb8.netlify.app)
+### Support URL
+https://thriving-macaron-6a97f3.netlify.app/support.html
 
-## Marketing URL (optional)
-thriving-macaron-6a97f3.netlify.app
+### Marketing URL (optional)
+https://thriving-macaron-6a97f3.netlify.app
 
-## Copyright
-[Year] Mehrin Reza Rim
+### Copyright
+2026 Mehrin Reza Rim
 
-## Age Rating
-4+ (no objectionable content — confirm during App Store Connect setup)
+### Version
+1.0.0 (Build 1)
 
-## Notes for App Review
-This app is a personal productivity dashboard for managing UGC brand
-partnerships. If it requires login, provide a demo account in the App Review
-notes field in App Store Connect so reviewers can access it without your
-personal data.
+## App Privacy (App Store Connect → App Privacy)
+- "Do you or your third-party partners collect data from this app?" → **No, we do not collect data from this app**
+- Result shown on the store: **Data Not Collected**
+
+This matches `privacy-policy.md`. If you later add login, analytics or a cloud
+database, update both.
+
+## App Review Information
+- Sign-in required: **No**
+- Contact: Mehrin Reza Rim · ugcrims@gmail.com · (your phone number)
+- Notes:
+
+> UGC Vault is a personal productivity dashboard for UGC (user-generated content)
+> creators to track brand partnerships, payments and weekly content batching.
+> No account or login is required. All data is entered by the user and stored
+> locally on the device. To test: open the app, add a brand/campaign, then check
+> the earnings ring and weekly batching checklist update.
+
+## Export Compliance
+Uses encryption: **No** (standard HTTPS only). `ITSAppUsesNonExemptEncryption`
+is set to `false` in Info.plist by `scripts/prepare-ios.sh`, so App Store
+Connect won't ask on each build.
+
+## TestFlight (Test Information)
+
+### Beta App Description
+UGC Vault helps UGC creators track brand deals, payments, earnings goals and
+weekly content batching in one dashboard.
+
+### What to Test
+Add a few brands and campaigns, mark payments as received, and tick off
+batching tasks. Tell us anything that looks off or feels slow.
+
+### Feedback Email
+ugcrims@gmail.com
+
+## Screenshots needed
+- iPhone 6.9" (1320 × 2868): 3–10 images. Use the iPhone 16 Pro Max simulator and press ⌘S.
+- iPad 13" (2064 × 2752): only if you leave iPad support on in Xcode.

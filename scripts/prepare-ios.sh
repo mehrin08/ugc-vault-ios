@@ -13,10 +13,22 @@ if ! command -v pod >/dev/null; then
   brew install cocoapods
 fi
 
-[ -f www/index.html ] || { echo "www/index.html not found. Put your web app build in the www folder first."; exit 1; }
+# Capacitor needs a www/index.html even when the app loads server.url.
+if [ ! -f www/index.html ]; then
+  mkdir -p www
+  printf '<!doctype html><meta charset="utf-8"><title>UGC Vault</title>\n' > www/index.html
+fi
 
 npm install
+
+[ -d ios ] || npx cap add ios
 npx cap sync ios
+
+# Skip the "Missing Compliance" (export encryption) question on every TestFlight upload.
+PLIST=ios/App/App/Info.plist
+/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+
 npx cap open ios
 
 echo
