@@ -32,8 +32,8 @@ your content, and send the reminders you set. We never sell your information,
 share it with advertisers, or use it for advertising.
 
 ## Where Your Data Is Stored
-Your account and content are stored with Supabase, our database provider, and
-protected so that only your signed-in account can read them. A copy is also
+Your account and content are stored in Canada with Supabase, our database
+provider, and protected so that only your signed-in account can read them. A copy is also
 kept on your device so the App opens quickly.
 
 ## Third-Party Services
@@ -56,16 +56,19 @@ Wherever you live, you can ask us to access, correct, export or delete your
 personal information by emailing ugcrims@gmail.com, and you can delete your
 account yourself in the App at any time. We reply within 30 days.
 
+UGC Vault is based in Canada, and we handle your information in line with
+Canada's privacy law (PIPEDA) and applicable provincial laws, including
+Quebec's. In Australia, we follow the Australian Privacy Principles.
+
 If you are in the UK, EU/EEA or Switzerland: we process your information
 because it is needed to provide the App you signed up for (performance of a
 contract), and for reminders you turn on, based on your choice (consent), which
-you can withdraw at any time. Your information is stored and processed in the
-United States by our service providers under standard contractual safeguards.
-You also have the right to complain to your local data protection authority.
-
-If you are in Canada, we handle your information in line with PIPEDA and
-applicable provincial laws; in Australia, in line with the Australian Privacy
-Principles.
+you can withdraw at any time. Your account and content are stored in Canada,
+which the EU and UK recognize as providing adequate protection for personal
+data. Our web host and other service providers listed above may process limited
+technical information in the United States under standard contractual
+safeguards. You also have the right to complain to your local data protection
+authority.
 
 We keep your information for as long as your account exists. When you delete
 your account, it is permanently removed from our database.

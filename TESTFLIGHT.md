@@ -46,7 +46,7 @@ The `web/` folder has the new version of your site: the calmer design, iPhone no
    `index.html`, `music.mp3`, `native.js`, `privacy.html`, `support.html`.
    **Keep your existing `sw.js`**; web push notifications use it.
 2. **Redeploy.** For drag-and-drop, go to Netlify → your site → **Deploys** and drag the whole folder in.
-3. **Add the delete-account function in Supabase**: Supabase → your project → **SQL Editor** → New query, paste this and click **Run**:
+3. **Moving to a Supabase project in Canada?** Follow `SUPABASE-CANADA.md` instead of this step; it includes this function. Otherwise, **add the delete-account function in Supabase**: Supabase → your project → **SQL Editor** → New query, paste this and click **Run**:
    ```sql
    create or replace function public.delete_my_account() returns void
    language plpgsql security definer set search_path = public as $$
