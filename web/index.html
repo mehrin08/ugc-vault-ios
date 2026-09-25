@@ -2318,9 +2318,16 @@ function paymentEditor(id){
 }
 
 // \u2500\u2500 brand deals tracker \u2500\u2500
-function normDeal(d){d=d||{};return {id:d.id||uid(),brand:d.brand||"",start:d.start||"",perCycle:d.perCycle||d.rate||"",deliverables:d.deliverables||"",platforms:d.platforms||"",bonus:d.bonus||"",accounts:normAccounts(d.accounts)};}
-// Login details per platform for a deal: {Instagram:{user,email,pass}, ...}
-function normAccounts(a){var out={};a=a||{};Object.keys(a).forEach(function(k){var x=a[k]||{};out[k]={user:x.user||"",email:x.email||"",pass:x.pass||""};});return out;}
+function normDeal(d){
+  d=d||{};
+  var loginEmail=d.loginEmail||"";
+  if(!loginEmail&&d.accounts){
+    Object.keys(d.accounts).some(function(k){var x=d.accounts[k]||{};if(x.email){loginEmail=x.email;return true;}return false;});
+  }
+  return {id:d.id||uid(),brand:d.brand||"",start:d.start||"",perCycle:d.perCycle||d.rate||"",deliverables:d.deliverables||"",platforms:d.platforms||"",bonus:d.bonus||"",accounts:normAccounts(d.accounts),loginEmail:loginEmail};
+}
+// Username per platform for a deal: {Instagram:{user}, ...} — login email/password are shared per deal, not per platform
+function normAccounts(a){var out={};a=a||{};Object.keys(a).forEach(function(k){var x=a[k]||{};out[k]={user:x.user||""};});return out;}
 function curDeal(id){return S.deals.find(function(d){return d.id===id;});}
 function rateNum(r){var m=(r||"").replace(/[, ]/g,"").match(/[\d.]+/);return m?parseFloat(m[0])||0:0;}
 function fmtDate(iso){if(!iso)return "";var p=iso.split("-");if(p.length!==3)return iso;return new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
@@ -2388,33 +2395,29 @@ function dealEditor(id){
     pwrap.appendChild(chip);
   });
   body.appendChild(pwrap);
-  // the account you use for this brand on each ticked platform
+  // the username you use for this brand on each ticked platform
   var accWrap=h("div",{class:"acc-wrap"});
   body.appendChild(accWrap);
   function drawAccounts(){
     accWrap.innerHTML="";
     if(!plats.length)return;
-    accWrap.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["accounts for this brand"]));
+    accWrap.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["usernames for this brand"]));
     plats.forEach(function(name){
-      var a=d.accounts[name]||(d.accounts[name]={user:"",email:"",pass:""});
+      var a=d.accounts[name]||(d.accounts[name]={user:""});
       var box=h("div",{class:"acc-box"});
       box.appendChild(h("div",{class:"acc-name"},[name]));
-      function field(key,ph,type){
-        var inp=h("input",{class:"auth-in acc-in",type:type||"text",placeholder:ph,value:a[key],autocomplete:"off",autocapitalize:"off",spellcheck:"false"});
-        inp.addEventListener("input",function(){a[key]=inp.value;save();});
-        return inp;
-      }
-      box.appendChild(field("user","@username"));
-      box.appendChild(field("email","email","email"));
-      var pw=field("pass","password","password");
-      var eye=h("button",{class:"acc-eye",type:"button","aria-label":"show password"},["show"]);
-      eye.addEventListener("click",function(){var hidden=pw.type==="password";pw.type=hidden?"text":"password";eye.textContent=hidden?"hide":"show";eye.setAttribute("aria-label",hidden?"hide password":"show password");});
-      box.appendChild(h("div",{class:"acc-pw"},[pw,eye]));
+      var inp=h("input",{class:"auth-in acc-in",placeholder:"@username",value:a.user,autocomplete:"off",autocapitalize:"off",spellcheck:"false"});
+      inp.addEventListener("input",function(){a.user=inp.value;save();});
+      box.appendChild(inp);
       accWrap.appendChild(box);
     });
-    accWrap.appendChild(h("p",{class:"ed-note"},["Saved to your account so you can see it on any device. For your most important passwords, a password manager is safer."]));
   }
   drawAccounts();
+  // one shared, optional email (not per platform, no password)
+  lab("email (optional)");
+  var em=h("input",{class:"auth-in",type:"email",placeholder:"email",value:d.loginEmail,autocomplete:"off",autocapitalize:"off",spellcheck:"false"});
+  em.addEventListener("input",function(){d.loginEmail=em.value;save();});
+  body.appendChild(em);
   var bonus=h("input",{class:"auth-in",placeholder:"e.g. $1 CPM",value:d.bonus});bonus.addEventListener("input",function(){d.bonus=bonus.value;save();});
   lab("bonus");body.appendChild(bonus);
   body.appendChild(h("div",{class:"ed-btns"},[
