@@ -545,6 +545,33 @@ html[data-theme="dark"] .lh-count{background:rgba(255,255,255,.08)}
 .note-title-in{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-size:26px}
 .note-body{min-height:55vh;font-size:15px;line-height:1.65;resize:none;overflow:hidden}
 .link-row .more-btn{width:32px;height:32px}
+
+/* ═══ subtasks + linked scripts ═══ */
+.t-col{flex:1;min-width:0}
+.t-col .t-txt{display:block}
+.t-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.row.count-row .t-meta{padding-left:33px}
+.meta-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;height:26px;padding:0 10px;border-radius:99px;border:1px solid var(--glass-bd);background:var(--field);font-family:DM Sans,Outfit;font-weight:500;font-size:11px;color:var(--ltx,var(--accent));cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta-chip.on{background:rgba(255,255,255,.75)}
+.subs{margin:-2px 0 8px 37px;padding:4px 0 4px 12px;border-left:2px solid rgba(var(--lt3,var(--s2)),.45)}
+.sub-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.check.sm{width:20px;height:20px}
+.check.sm.on::after{font-size:9.5px}
+.sub-t{flex:1;min-width:0;font-family:Inter;font-size:12.8px;color:var(--ink);overflow-wrap:anywhere;cursor:pointer}
+.sub-t.done{color:var(--faint);text-decoration:line-through}
+.sub-add{display:flex;gap:6px;margin-top:4px}
+.sub-in{height:38px;font-size:12.5px;border-radius:12px}
+.add-btn.sm{width:40px;height:38px;border-radius:12px;font-size:16px}
+.pick-brand{font-family:DM Sans,Outfit;font-weight:700;font-size:10.8px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:14px 2px 0}
+.menu-item.on{border-color:var(--accent)}
+
+/* ═══ deal accounts ═══ */
+.acc-box{margin-top:10px;padding:12px;border-radius:16px;background:var(--field);border:1px solid var(--glass-bd)}
+.acc-name{font-family:DM Sans,Outfit;font-weight:600;font-size:12px;color:var(--accent);letter-spacing:.3px}
+.acc-in{height:44px;margin-top:8px}
+.acc-pw{position:relative}
+.acc-pw .acc-in{padding-right:64px}
+.acc-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);margin-top:4px;height:30px;padding:0 10px;border-radius:10px;border:none;background:transparent;font-family:DM Sans,Outfit;font-size:11.5px;color:var(--accent);cursor:pointer}
 </style>
 </head>
 <body>
@@ -709,7 +736,7 @@ var EMOJIS=["✿","🌸","🌷","🎀","🩰","☁️","🫧","💗","✨","🌙
 var EVERY=[{l:"Once",v:0},{l:"15m",v:15},{l:"30m",v:30},{l:"1h",v:60}];
 var PRESETS=[{l:"8am once",p:{remind:"08:00",every:0,until:""}},{l:"30m · 9–5",p:{remind:"09:00",every:30,until:"17:00"}},{l:"1h · 9–6",p:{remind:"09:00",every:60,until:"18:00"}},{l:"1h · 6–10pm",p:{remind:"18:00",every:60,until:"22:00"}},{l:"30m · 6–9pm",p:{remind:"18:00",every:30,until:"21:00"}},{l:"8pm once",p:{remind:"20:00",every:0,until:""}}];
 
-function blankSub(t){return {id:uid(),title:t,done:false,remind:"",every:0,until:"",snooze:"",fired:"",repeat:false,target:1,count:0};}
+function blankSub(t){return {id:uid(),title:t,done:false,remind:"",every:0,until:"",snooze:"",fired:"",repeat:false,target:1,count:0,items:[],script:null};}
 function seed(){return [
   {id:uid(),title:"Morning",emoji:"✨",subs:[Object.assign(blankSub("Skincare + water"),{repeat:true}),Object.assign(blankSub("Check brand emails"),{repeat:true})]},
   {id:uid(),title:"Content",emoji:"🎬",subs:[blankSub("Film UGC clip"),blankSub("Edit + caption")]}
@@ -730,7 +757,7 @@ function applyBlob(p){
     var lastReset=p.lastReset||"";
     S.lists=S.lists.map(function(l){return Object.assign({emoji:"",kind:"daily"},l,{subs:l.subs.map(function(s){return Object.assign(blankSub(""),s);})});});
     if(lastReset!==today()){
-      S.lists=S.lists.map(function(l){return Object.assign({},l,{subs:l.subs.map(function(s){return Object.assign({},s,{done:false,fired:"",snooze:"",count:0});})});});
+      S.lists=S.lists.map(function(l){return Object.assign({},l,{subs:l.subs.map(function(s){return Object.assign({},s,{done:false,fired:"",snooze:"",count:0,items:(s.items||[]).map(function(i){return Object.assign({},i,{done:false});})});})});});
       S.focus=[];
     }
     if(S.lastComplete!==today()&&S.lastComplete!==yesterday())S.streak=0;
@@ -947,6 +974,53 @@ function stepCount(sid,d){var f=findSub(sid);if(!f)return;var t=f.s.target||1;va
 function setKind(lid,kind){var l=S.lists.find(function(x){return x.id===lid;});if(l){l.kind=(kind==="batch"?"batch":"daily");commit();}}
 function reorderKind(kind,order){var ordered=S.lists.filter(function(l){return (l.kind||"daily")===kind;}).sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});var i=0;S.lists=S.lists.map(function(l){return (l.kind||"daily")===kind?ordered[i++]:l;});save();render();}
 function openGoal(sid){var f=findSub(sid);if(!f)return;var s=f.s;var ov=h("div",{class:"overlay"});function close(){ov.remove();render();}ov.addEventListener("click",function(e){if(e.target===ov)close();});var card=h("div",{class:"glass editor"});card.appendChild(h("div",{class:"ed-hd",html:countIcon(18)+' <span class="t">How many?</span>'}));card.appendChild(h("p",{class:"ed-sub",style:"margin-bottom:14px;line-height:1.5"},["Track this task as a set. For example, post 5 videos shows 1 of 5 done, then 2 of 5, until it is complete."]));var picks=h("div",{style:"display:flex;flex-wrap:wrap;gap:8px"});[2,3,4,5,7,10].forEach(function(n){picks.appendChild(h("button",{class:"preset"+((s.target||1)===n?" on":""),onclick:function(){setTarget(sid,n);close();}},[String(n)]));});card.appendChild(picks);var custom=h("input",{class:"ed-time",type:"number",min:"1",max:"99",value:String(s.target||1),placeholder:"custom number",style:"margin-top:10px"});card.appendChild(custom);var rowb=h("div",{style:"display:flex;gap:8px;margin-top:14px"});rowb.appendChild(h("button",{class:"soft-btn",onclick:function(){setTarget(sid,1);close();}},["single task"]));rowb.appendChild(h("button",{class:"solid-btn",style:"flex:1;height:46px;border-radius:14px",onclick:function(){setTarget(sid,parseInt(custom.value,10)||1);close();}},["save"]));card.appendChild(rowb);ov.appendChild(card);document.body.appendChild(ov);}
+// ── subtasks and linked scripts on tasks ──
+function subItems(s){return s.items||(s.items=[]);}
+function addItem(sid,t){t=(t||"").trim();if(!t)return;var f=findSub(sid);if(!f)return;subItems(f.s).push({id:uid(),title:t,done:false});uiSet("sub:"+sid,true);syncParentDone(f.s);commit();}
+function delItem(sid,iid){var f=findSub(sid);if(!f)return;f.s.items=subItems(f.s).filter(function(i){return i.id!==iid;});syncParentDone(f.s);commit();}
+function renameItem(sid,iid,t){t=(t||"").trim();var f=findSub(sid);var it=f&&subItems(f.s).find(function(i){return i.id===iid;});if(it&&t){it.title=t;commit();}else render();}
+function toggleItem(sid,iid){var f=findSub(sid);var it=f&&subItems(f.s).find(function(i){return i.id===iid;});if(!it)return;it.done=!it.done;syncParentDone(f.s);commit();}
+// Ticking off the last subtask ticks off the task; un-ticking one reopens it.
+function syncParentDone(s){
+  if((s.target||1)>1||!s.items||!s.items.length)return;
+  var all=s.items.every(function(i){return i.done;});
+  if(all&&!s.done)s.done=true;else if(!all&&s.done)s.done=false;
+}
+function linkedScript(s){
+  if(!s||!s.script)return null;
+  var b=S.brands.find(function(x){return x.id===s.script.bid;});
+  var x=b&&b.scripts.find(function(y){return y.id===s.script.sid;});
+  return x?{b:b,x:x}:null;
+}
+function openLinkedScript(s){var l=linkedScript(s);if(!l)return;S.tab="scripts";scr.brand=l.b.id;scr.script=l.x.id;save();render();window.scrollTo(0,0);}
+function scriptPicker(sid){
+  var f=findSub(sid);if(!f)return;var s=f.s,cur=linkedScript(s);
+  var ov=h("div",{class:"overlay sheet-ov"});function close(){ov.remove();}
+  ov.addEventListener("click",function(e){if(e.target===ov)close();});
+  var card=h("div",{class:"glass editor sheet"});
+  card.appendChild(h("div",{class:"ed-hd"},[h("span",{class:"t"},["Link a script"])]));
+  card.appendChild(h("p",{class:"ed-sub",style:"margin-bottom:6px"},["for “"+s.title+"”"]));
+  var any=false;
+  S.brands.forEach(function(b){
+    if(!b.scripts.length)return;any=true;
+    card.appendChild(h("div",{class:"pick-brand"},[b.name]));
+    b.scripts.forEach(function(x){
+      var on=cur&&cur.x.id===x.id;
+      var btn=h("button",{class:"menu-item"+(on?" on":""),html:'<span class="mi-ic">'+(on?"✓":heart(14))+'</span><span class="mi-l">'+esc(x.title||"Untitled script")+'</span><span class="mi-sub">'+wordCount(x.body)+' w</span>'});
+      btn.addEventListener("click",function(){close();s.script={bid:b.id,sid:x.id};commit();});
+      card.appendChild(btn);
+    });
+  });
+  if(!any){
+    card.appendChild(h("p",{class:"empty",style:"margin-top:8px"},["No scripts yet. Write one in the scripts tab, then link it here."]));
+    card.appendChild(h("button",{class:"menu-item",html:'<span class="mi-ic">+</span><span class="mi-l">go to scripts</span>',onclick:function(){close();go("scripts");}}));
+  }
+  if(cur)card.appendChild(h("button",{class:"menu-item danger",html:'<span class="mi-ic">×</span><span class="mi-l">unlink script</span>',onclick:function(){close();s.script=null;commit();}}));
+  card.appendChild(h("button",{class:"soft-btn",style:"height:44px;border-radius:14px;margin-top:12px;width:100%;flex:none",onclick:close},["close"]));
+  ov.appendChild(card);document.body.appendChild(ov);
+}
+function scriptIcon(){return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';}
+function subIcon(){return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>';}
 function renderTasks(){
   var app=document.getElementById("app");app.innerHTML="";
   var flat=S.lists.reduce(function(a,l){return a.concat(l.subs);},[]);
@@ -1012,17 +1086,28 @@ function renderTasks(){
     var txt=h("span",{class:"t-txt"+(s.done?" done":""),title:"tap to rename",onclick:function(){startRename(txt,s.title,true,function(v){renameSub(s.id,v);});}},[s.title]);
     var set=!!(s.remind||s.snooze);
     var more=h("button",{class:"more-btn","aria-label":"more options for "+s.title,"aria-expanded":"false"},["⋯"]);
+    var col=h("div",{class:"t-col"},[txt]);
+    var items=subItems(s),ls=linkedScript(s),subOpen=!!UI["sub:"+s.id];
+    if(items.length||ls){
+      var meta=h("div",{class:"t-meta"});
+      if(items.length){
+        var idn=items.filter(function(i){return i.done;}).length;
+        meta.appendChild(h("button",{class:"meta-chip"+(subOpen?" on":""),"aria-expanded":subOpen?"true":"false",html:subIcon()+" "+idn+"/"+items.length+" subtasks",onclick:function(){uiSet("sub:"+s.id,!subOpen);render();}}));
+      }
+      if(ls)meta.appendChild(h("button",{class:"meta-chip",title:"open script",html:scriptIcon()+" "+esc(ls.x.title||"Untitled script"),onclick:function(){openLinkedScript(s);}}));
+      col.appendChild(meta);
+    }
     if(multi){
       var t=s.target,c=s.count||0,doneM=c>=t;
       var pill=h("div",{class:"count-pill"+(doneM?" on":"")});
       pill.appendChild(h("button",{class:"count-btn","aria-label":"one fewer",onclick:function(){stepCount(s.id,-1);}},["−"]));
       pill.appendChild(h("button",{class:"count-num",title:"change the number",onclick:function(){openGoal(s.id);}},[c+" / "+t]));
       pill.appendChild(h("button",{class:"count-btn","aria-label":"one more",onclick:function(){stepCount(s.id,1);}},["+"]));
-      row.appendChild(txt);
+      row.appendChild(col);
       row.appendChild(pill);
     }else{
       row.appendChild(h("button",{class:"check"+(s.done?" on":""),"aria-label":"toggle",onclick:function(){toggle(s.id);}}));
-      row.appendChild(txt);
+      row.appendChild(col);
     }
     // a reminder that's already set stays visible; everything else sits behind the dots
     if(set){
@@ -1037,11 +1122,27 @@ function renderTasks(){
       panel=h("div",{class:"row-more"},[
         h("button",{class:"act",html:alarmIcon(13)+(set?" edit reminder":" reminder"),onclick:function(){openEditor({sid:s.id});}}),
         h("button",{class:"act",html:countIcon(13)+(multi?" change count":" count a set"),onclick:function(){openGoal(s.id);}}),
+        h("button",{class:"act",html:subIcon()+" subtasks",onclick:function(){uiSet("sub:"+s.id,true);render();var el=document.querySelector('[data-subin="'+s.id+'"]');if(el)el.focus();}}),
+        h("button",{class:"act",html:scriptIcon()+(ls?" change script":" link script"),onclick:function(){scriptPicker(s.id);}}),
         h("button",{class:"act",onclick:function(){toggleFocus(s.id);}},[focusHas(s.id)?"★ unpin focus":"☆ pin to focus"]),
         h("button",{class:"act danger",onclick:function(){delSub(l.id,s.id);}},["× delete"])
       ]);
       row.after(panel);more.setAttribute("aria-expanded","true");
     });
+    if(subOpen){
+      var sw=h("div",{class:"subs"});
+      items.forEach(function(it){
+        var t2=h("span",{class:"sub-t"+(it.done?" done":""),title:"tap to rename",onclick:function(){startRename(t2,it.title,true,function(v){renameItem(s.id,it.id,v);});}},[it.title]);
+        sw.appendChild(h("div",{class:"sub-row"},[
+          h("button",{class:"check sm"+(it.done?" on":""),"aria-label":"toggle subtask",onclick:function(){toggleItem(s.id,it.id);}}),
+          t2,
+          h("button",{class:"ghost","aria-label":"delete subtask",onclick:function(){delItem(s.id,it.id);}},["×"])
+        ]));
+      });
+      var si=h("input",{class:"txt-in sub-in",placeholder:"add a subtask…","data-subin":s.id,onkeydown:function(e){if(e.key==="Enter"){addItem(s.id,si.value);var el=document.querySelector('[data-subin="'+s.id+'"]');if(el)el.focus();}}});
+      sw.appendChild(h("div",{class:"sub-add"},[si,h("button",{class:"add-btn sm","aria-label":"add subtask",onclick:function(){addItem(s.id,si.value);}},["+"])]));
+      row._subs=sw;
+    }
     enableDrag(row,tasks,function(order){l.subs.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
     return row;
   }
@@ -1078,7 +1179,7 @@ function renderTasks(){
     enableDrag(listHead,container,function(order){reorderKind(curKindOf(l),order);},section);
     if(open){
       var tasks=h("div",{class:"tasks"});
-      l.subs.forEach(function(s){tasks.appendChild(buildRow(l,s,tasks));});
+      l.subs.forEach(function(s){var r=buildRow(l,s,tasks);tasks.appendChild(r);if(r._subs)tasks.appendChild(r._subs);});
       section.appendChild(tasks);
       var ti=h("input",{class:"txt-in",placeholder:"add a task…",onkeydown:function(e){if(e.key==="Enter"){addSub(l.id,ti.value);}}});
       section.appendChild(h("div",{class:"add-row"},[ti,h("button",{class:"add-btn","aria-label":"add task",onclick:function(){addSub(l.id,ti.value);}},["+"])]));
@@ -2217,7 +2318,9 @@ function paymentEditor(id){
 }
 
 // \u2500\u2500 brand deals tracker \u2500\u2500
-function normDeal(d){d=d||{};return {id:d.id||uid(),brand:d.brand||"",start:d.start||"",perCycle:d.perCycle||d.rate||"",deliverables:d.deliverables||"",platforms:d.platforms||"",bonus:d.bonus||""};}
+function normDeal(d){d=d||{};return {id:d.id||uid(),brand:d.brand||"",start:d.start||"",perCycle:d.perCycle||d.rate||"",deliverables:d.deliverables||"",platforms:d.platforms||"",bonus:d.bonus||"",accounts:normAccounts(d.accounts)};}
+// Login details per platform for a deal: {Instagram:{user,email,pass}, ...}
+function normAccounts(a){var out={};a=a||{};Object.keys(a).forEach(function(k){var x=a[k]||{};out[k]={user:x.user||"",email:x.email||"",pass:x.pass||""};});return out;}
 function curDeal(id){return S.deals.find(function(d){return d.id===id;});}
 function rateNum(r){var m=(r||"").replace(/[, ]/g,"").match(/[\d.]+/);return m?parseFloat(m[0])||0:0;}
 function fmtDate(iso){if(!iso)return "";var p=iso.split("-");if(p.length!==3)return iso;return new Date(p[0],p[1]-1,p[2]).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
@@ -2248,7 +2351,9 @@ function renderDeals(){
       h("div",{class:"deal-rate"},[d.perCycle||"\u2014"])
     ]));
     // one summary line; tap the card for every detail
-    var meta=[];if(d.deliverables)meta.push(d.deliverables);if(d.platforms)meta.push(d.platforms);if(d.bonus)meta.push("\u2726 "+d.bonus);if(d.start)meta.push("from "+fmtDate(d.start));
+    var meta=[];if(d.deliverables)meta.push(d.deliverables);
+    var handles=(d.platforms?d.platforms.split(",").map(function(x){return x.trim();}).filter(Boolean):[]).map(function(pn){var ac=d.accounts&&d.accounts[pn];var u=ac&&ac.user?ac.user.trim():"";return u?pn+" "+(u.charAt(0)==="@"?u:"@"+u):pn;});
+    if(handles.length)meta.push(handles.join(", "));if(d.bonus)meta.push("\u2726 "+d.bonus);if(d.start)meta.push("from "+fmtDate(d.start));
     if(meta.length)card.appendChild(h("div",{class:"deal-line deal-meta1"},[meta.join(" \u00b7 ")]));
     app.appendChild(card);
   });
@@ -2278,10 +2383,38 @@ function dealEditor(id){
       var i=plats.indexOf(name);if(i>=0)plats.splice(i,1);else plats.push(name);
       d.platforms=plats.join(", ");save();
       chip.className="plat-chip"+(plats.indexOf(name)>=0?" on":"");
+      drawAccounts();
     }},[name]);
     pwrap.appendChild(chip);
   });
   body.appendChild(pwrap);
+  // the account you use for this brand on each ticked platform
+  var accWrap=h("div",{class:"acc-wrap"});
+  body.appendChild(accWrap);
+  function drawAccounts(){
+    accWrap.innerHTML="";
+    if(!plats.length)return;
+    accWrap.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["accounts for this brand"]));
+    plats.forEach(function(name){
+      var a=d.accounts[name]||(d.accounts[name]={user:"",email:"",pass:""});
+      var box=h("div",{class:"acc-box"});
+      box.appendChild(h("div",{class:"acc-name"},[name]));
+      function field(key,ph,type){
+        var inp=h("input",{class:"auth-in acc-in",type:type||"text",placeholder:ph,value:a[key],autocomplete:"off",autocapitalize:"off",spellcheck:"false"});
+        inp.addEventListener("input",function(){a[key]=inp.value;save();});
+        return inp;
+      }
+      box.appendChild(field("user","@username"));
+      box.appendChild(field("email","email","email"));
+      var pw=field("pass","password","password");
+      var eye=h("button",{class:"acc-eye",type:"button","aria-label":"show password"},["show"]);
+      eye.addEventListener("click",function(){var hidden=pw.type==="password";pw.type=hidden?"text":"password";eye.textContent=hidden?"hide":"show";eye.setAttribute("aria-label",hidden?"hide password":"show password");});
+      box.appendChild(h("div",{class:"acc-pw"},[pw,eye]));
+      accWrap.appendChild(box);
+    });
+    accWrap.appendChild(h("p",{class:"ed-note"},["Saved to your account so you can see it on any device. For your most important passwords, a password manager is safer."]));
+  }
+  drawAccounts();
   var bonus=h("input",{class:"auth-in",placeholder:"e.g. $1 CPM",value:d.bonus});bonus.addEventListener("input",function(){d.bonus=bonus.value;save();});
   lab("bonus");body.appendChild(bonus);
   body.appendChild(h("div",{class:"ed-btns"},[
