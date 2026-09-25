@@ -16,7 +16,7 @@ Copy and paste each field into App Store Connect. Character limits are in bracke
 | Age rating | 4+ (answer "None" / "No" to every questionnaire item) |
 | Privacy Policy URL | https://thriving-macaron-6a97f3.netlify.app/privacy.html |
 | License Agreement | Apple's standard EULA (leave the default) |
-| Price | Free (with in-app subscription) |
+| Price | Free |
 
 ## Version 1.0 (App Store tab)
 
@@ -46,16 +46,6 @@ you can delete your account and data anytime from the app.
 
 Built by a creator, for creators: no bloated CRM, just what you need to run
 a UGC business day to day.
-
-SUBSCRIPTION
-Try everything free for 3 days. After the trial, UGC Vault is $4.99 a month or
-$49.99 a year (prices may vary by country). Payment is charged to your Apple
-Account when the trial ends. Your subscription renews automatically unless
-you cancel at least 24 hours before the end of the current period. Manage or
-cancel anytime in your App Store account settings.
-
-Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
-Privacy Policy: https://thriving-macaron-6a97f3.netlify.app/privacy.html
 
 ### Keywords [100]
 ugc,content creator,brand deals,creator tools,campaign tracker,earnings tracker,batching,influencer
@@ -124,13 +114,6 @@ Identifiers**, with **Data Used to Track You: none**. This matches
 > 2. Haptic feedback when ticking off tasks and tapping buttons.
 > 3. Account deletion: menu → account → "delete account" permanently deletes
 >    the account and its data.
->
-> Subscription: after signing in, the subscribe screen offers a 3-day free
-> trial of the monthly ($4.99) or yearly ($49.99) plan. Please start the trial
-> with a sandbox account to unlock the app. "Restore purchases", Terms of Use
-> and Privacy Policy links are on the same screen; menu → subscription opens
-> Apple's manage/cancel screen.
-
 ## Export Compliance
 Uses encryption: **No** (standard HTTPS only). `ITSAppUsesNonExemptEncryption`
 is set to `false` in Info.plist by `scripts/prepare-ios.sh`, so App Store
@@ -155,4 +138,28 @@ ugcrims@gmail.com
 - iPhone 6.9" (1320 × 2868): 3–10 images. Use the iPhone 16 Pro Max simulator and press ⌘S.
 - Not needed for iPad: the app is set to iPhone only.
 - Tip: take them signed in to the demo account with sample data. Include the
-  tasks tab, the home dashboard, a script, and the phone notifications screen.
+  tasks tab, the home dashboard, a script, notes, and the phone notifications screen.
+
+## Version 1.1 — when you turn on the subscription
+Version 1 launches free. For 1.1, set `SUBSCRIPTIONS_ON=true` in `web/index.html`,
+create the products (TESTFLIGHT.md step 5b), and add these:
+
+**Add to the end of the description:**
+
+SUBSCRIPTION
+Try everything free for 3 days. After the trial, UGC Vault is $4.99 a month or
+$49.99 a year (prices may vary by country). Payment is charged to your Apple
+Account when the trial ends. Your subscription renews automatically unless
+you cancel at least 24 hours before the end of the current period. Manage or
+cancel anytime in your App Store account settings.
+
+Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+Privacy Policy: https://thriving-macaron-6a97f3.netlify.app/privacy.html
+
+**Add to the review notes:**
+
+> Subscription: after signing in, the subscribe screen offers a 3-day free
+> trial of the monthly ($4.99) or yearly ($49.99) plan. Please start the trial
+> with a sandbox account to unlock the app. "Restore purchases", Terms of Use
+> and Privacy Policy links are on the same screen; menu → subscription opens
+> Apple's manage/cancel screen.

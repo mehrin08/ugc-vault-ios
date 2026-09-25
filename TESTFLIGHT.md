@@ -114,7 +114,10 @@ If the name "UGC Vault" is taken, try "UGC Vault: Creator Hub". The name on the 
 
 ---
 
-## 5b. Set up the subscription (3-day free trial, then $4.99/month or $49.99/year)
+## 5b. Set up the subscription — version 1.1 only (skip this for the free launch)
+
+> Version 1 is free: the subscription code is switched off (`SUBSCRIPTIONS_ON=false` in `web/index.html`). When you're ready for 1.1, do this section, then set it to `true` and redeploy Netlify.
+
 
 The app already has the subscribe screen and the lock. The app code expects these exact product IDs.
 
@@ -165,12 +168,11 @@ The app already has the subscribe screen and the lock. The app code expects thes
 In App Store Connect → your app → **App Store** tab → version 1.0, paste everything from `app-store-listing.md`:
 
 - Promo text, description, keywords, support and marketing URLs, copyright
-- **Screenshots**: the 6.9" set from step 4 (3–10 images). Include the subscribe screen and one of the phone notifications screen.
-- **In-App Purchases and Subscriptions**: add the monthly and yearly subscriptions (step 5b)
+- **Screenshots**: the 6.9" set from step 4 (3–10 images). Include one of the phone notifications screen.
 - **App Privacy**: answer as in the table in `app-store-listing.md` (email, user content, user ID; none used for tracking)
 - **Age Rating**: answer "None"/"No" to everything → 4+
 - **Build**: click **+** and choose your upload
-- **App Review Information**: sign-in required; enter the demo account's email and password, then paste the review notes. Don't subscribe the demo account yourself; the reviewer tests the trial with their own test account.
+- **App Review Information**: sign-in required; enter the demo account's email and password, then paste the review notes.
 - **Add for Review** → **Submit**. Review usually takes 1–3 days.
 
 ---

@@ -533,6 +533,18 @@ html[data-theme="dark"] .lh-count{background:rgba(255,255,255,.08)}
 .pw-fine{font-family:Inter;font-size:10.8px;line-height:1.55;color:var(--muted);text-align:center;margin-top:12px}
 .pw-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:10px}
 .pw-links .lock-link{margin-top:6px;font-size:12px;text-decoration:none}
+
+/* ═══ notes ═══ */
+.note-list{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.note-card{border-radius:18px;padding:14px 16px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.note-card.dragging{box-shadow:0 8px 22px rgba(var(--sh),.28)}
+.note-card-t{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-size:17px;color:var(--ink);overflow-wrap:anywhere}
+.note-card-p{font-family:Inter;font-size:13px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-card-d{font-family:DM Sans,Outfit;font-size:10.8px;color:var(--faint);margin-top:6px}
+.note-top{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.note-title-in{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-size:26px}
+.note-body{min-height:55vh;font-size:15px;line-height:1.65;resize:none;overflow:hidden}
+.link-row .more-btn{width:32px;height:32px}
 </style>
 </head>
 <body>
@@ -746,7 +758,10 @@ function applyBlob(p){
   document.documentElement.setAttribute("data-theme",S.mode);
 }
 function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume};}
-function normResources(r){r=r||{};return {notes:r.notes||"",links:(r.links||[]).map(function(l){return {id:l.id||uid(),label:l.label||l.url||"link",url:l.url||"#"};})};}
+function normResources(r){r=r||{};
+  var pages=Array.isArray(r.pages)?r.pages.map(function(p){return {id:p.id||uid(),title:p.title||"",body:p.body||"",updated:p.updated||""};})
+    :(r.notes&&r.notes.trim()?[{id:uid(),title:"Tips & tricks",body:r.notes,updated:new Date().toISOString()}]:[]); // older versions had one big notes box
+  return {notes:r.notes||"",pages:pages,links:(r.links||[]).map(function(l){return {id:l.id||uid(),label:l.label||l.url||"link",url:l.url||"#"};})};}
 function normBrand(b){b=b||{};var bhooks=(b.hooks||[]).map(function(x){return {id:x.id||uid(),text:x.text||""};});
   return {id:b.id||uid(),name:b.name||"Untitled",notes:b.notes||"",links:(b.links||[]).map(function(l){return {id:l.id||uid(),label:l.label||l.url||"link",url:l.url||"#"};}),
     scripts:(b.scripts||[]).map(function(x){
@@ -1264,6 +1279,8 @@ var PRO_IDS=[PRO_MONTHLY,PRO_YEARLY];
 var TERMS_URL="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 var PRIVACY_URL="https://thriving-macaron-6a97f3.netlify.app/privacy.html";
 var PRO={checked:false,active:false,status:null};
+// Version 1 launches free. Set to true in version 1.1 once the subscriptions exist in App Store Connect.
+var SUBSCRIPTIONS_ON=false;
 function inAppShell(){return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());}
 // native.js loads after this script, so wait for it before talking to the App Store.
 function whenNative(fn){
@@ -1271,7 +1288,7 @@ function whenNative(fn){
   document.addEventListener("ugcvault:ready",function once(){document.removeEventListener("ugcvault:ready",once);fn();});
 }
 function checkAccess(){
-  if(!inAppShell())return;
+  if(!SUBSCRIPTIONS_ON||!inAppShell())return;
   whenNative(function(){
     window.UGCVault.subscription.status(PRO_IDS).then(function(st){
       PRO.checked=true;PRO.active=!!st.active;PRO.status=st;
@@ -1381,7 +1398,7 @@ function openPaywall(st){
   });
 }
 function subscriptionMenuItem(){
-  if(!inAppShell()||!PRO.status)return null;
+  if(!SUBSCRIPTIONS_ON||!inAppShell()||!PRO.status)return null;
   var st=PRO.status,sub="";
   if(st.active){
     var when=st.expires?new Date(st.expires).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
@@ -2416,47 +2433,96 @@ function renderBatches(){
   app.appendChild(h("p",{class:"foot"},["a weekly plan — your checks stay until you tap reset week · tap a day to schedule an item · press & hold to reorder"]));
 }
 
-// ── resources: tips & tricks + important software links ──
+// ── notes: separate note pages + quick links ──
+var noteOpen=null; // id of the note page being edited, or null for the list
 function addResourceLink(label,url){url=(url||"").trim();if(!url)return;if(!/^https?:/i.test(url))url="https://"+url;S.resources.links.push({id:uid(),label:(label||"").trim()||url,url:url});save();render();}
 function delResourceLink(id){S.resources.links=S.resources.links.filter(function(l){return l.id!==id;});save();render();}
 function editResourceLink(id,label,url){var l=S.resources.links.find(function(x){return x.id===id;});if(!l)return;url=(url||"").trim();if(!url)return;if(!/^https?:/i.test(url))url="https://"+url;l.label=(label||"").trim()||url;l.url=url;save();render();}
+function curNote(){return S.resources.pages.find(function(p){return p.id===noteOpen;});}
+function newNote(){var p={id:uid(),title:"",body:"",updated:new Date().toISOString()};S.resources.pages.unshift(p);noteOpen=p.id;save();render();var t=document.querySelector(".note-title-in");if(t)t.focus();}
+function delNote(id){S.resources.pages=S.resources.pages.filter(function(p){return p.id!==id;});if(noteOpen===id)noteOpen=null;save();render();}
+function closeNote(){var p=curNote();noteOpen=null;if(p&&!p.title.trim()&&!p.body.trim())delNote(p.id);else render();}
+function noteWhen(iso){if(!iso)return "";var d=new Date(iso),now=new Date();if(d.toDateString()===now.toDateString())return "today "+d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});}
 function resourcesHeader(){
   var right=h("div",{class:"top-right"});
   right.appendChild(menuBtn());
   return h("header",{},[chandelier(),buildTabs(),
-    h("div",{class:"top"},[h("div",{class:"title-wrap",html:'<span style="font-size:18px">\uD83D\uDDC2\uFE0F</span><h1>resources</h1>'}),right]),
+    h("div",{class:"top"},[h("div",{class:"title-wrap",html:'<span style="font-size:18px">🗂️</span><h1>notes</h1>'}),right]),
     h("p",{class:"date"},["tips, tricks & the tools you swear by"])]);
 }
 function renderResources(){
   var app=document.getElementById("app");app.innerHTML="";
+  if(noteOpen&&curNote())return renderNotePage(app);
+  noteOpen=null;
   app.appendChild(resourcesHeader());
-  app.appendChild(sectionHead("important software",function(){addResourceLinkModal();},"+ add link"));
-  if(!S.resources.links.length)app.appendChild(h("p",{class:"empty"},["Save links to the software, apps or sites you rely on."]));
+
+  // note pages
+  app.appendChild(h("button",{class:"newbrand",style:"margin:4px 0 14px",onclick:newNote},["+ new note"]));
+  var pages=S.resources.pages;
+  if(!pages.length)app.appendChild(h("p",{class:"empty"},["Each note gets its own page: editing tricks, brand briefs, content ideas, anything worth remembering."]));
+  var notesWrap=h("div",{class:"note-list"});
+  pages.forEach(function(p){
+    var first=(p.body||"").split("\n").map(function(x){return x.trim();}).filter(Boolean)[0]||"";
+    var card=h("div",{class:"glass note-card",role:"button",tabindex:"0",onclick:function(){noteOpen=p.id;render();},onkeydown:function(e){if(e.key==="Enter"){noteOpen=p.id;render();}}});
+    card.dataset.drag=p.id;
+    card.appendChild(h("div",{class:"note-card-t"},[p.title.trim()||"Untitled note"]));
+    card.appendChild(h("div",{class:"note-card-p"},[first||"Empty note"]));
+    card.appendChild(h("div",{class:"note-card-d"},[noteWhen(p.updated)]));
+    enableDrag(card,notesWrap,function(order){S.resources.pages.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    notesWrap.appendChild(card);
+  });
+  app.appendChild(notesWrap);
+
+  // quick links
+  var links=S.resources.links;
+  var lb=foldSection(app,"quick-links","quick links",links.length,function(){addResourceLinkModal();},"+ add link",true);
+  if(!links.length)lb.appendChild(h("p",{class:"empty"},["Save the apps, sites and tools you use all the time, one tap away."]));
   var linksWrap=h("div");
-  S.resources.links.forEach(function(l){
+  links.forEach(function(l){
     var row=h("div",{class:"glass link-row"});row.dataset.drag=l.id;
-    var grip=h("button",{class:"grip","aria-label":"reorder",onclick:function(e){e.preventDefault();}},["\u2807"]);
-    var a=h("a",{href:l.url,target:"_blank",rel:"noopener",style:"flex:1"},[l.label||l.url]);
-    var edit=h("button",{class:"ghost","aria-label":"edit link",onclick:function(){addResourceLinkModal(l);}},["\u270e"]);
-    var del=h("button",{class:"ghost","aria-label":"remove link",onclick:function(){delResourceLink(l.id);}},["\u00d7"]);
-    [grip,a,edit,del].forEach(function(x){row.appendChild(x);});
+    row.appendChild(h("a",{href:l.url,target:"_blank",rel:"noopener",style:"flex:1"},[l.label||l.url]));
+    row.appendChild(h("button",{class:"more-btn","aria-label":"options for "+(l.label||"link"),onclick:function(){
+      menuSheet(l.label||"Link",[
+        {icon:"✎",label:"edit link",onclick:function(){addResourceLinkModal(l);}},
+        {icon:"×",label:"remove link",danger:true,onclick:function(){delResourceLink(l.id);}}
+      ]);
+    }},["⋯"]));
     enableDrag(row,linksWrap,function(order){S.resources.links.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
     linksWrap.appendChild(row);
   });
-  app.appendChild(linksWrap);
-  app.appendChild(sectionHead("tips & tricks",null));
-  var notes=h("textarea",{class:"notes-area",style:"min-height:220px",placeholder:"jot down workflow shortcuts, editing tricks, anything worth remembering\u2026"});notes.value=S.resources.notes||"";
-  notes.addEventListener("input",function(){S.resources.notes=notes.value;save();});
-  app.appendChild(notes);
-  app.appendChild(h("p",{class:"foot",html:"press \u0026 hold a link to reorder"}));
+  lb.appendChild(linksWrap);
+  app.appendChild(h("p",{class:"foot"},["press & hold a note or link to reorder"]));
+}
+function renderNotePage(app){
+  var p=curNote();
+  var top=h("div",{class:"note-top"},[
+    h("button",{class:"back-btn",style:"margin:0",html:"‹ all notes",onclick:closeNote}),
+    h("button",{class:"more-btn","aria-label":"note options",onclick:function(){
+      menuSheet(p.title.trim()||"Untitled note",[
+        {icon:"+",label:"new note",onclick:function(){closeNote();newNote();}},
+        {icon:"×",label:"delete note",danger:true,onclick:function(){confirmModal("Delete “"+(p.title.trim()||"Untitled note")+"”?",function(){delNote(p.id);});}}
+      ]);
+    }},["⋯"])
+  ]);
+  app.appendChild(top);
+  var when=h("div",{class:"stat-line",style:"margin:0 2px 6px"},["edited "+noteWhen(p.updated)]);
+  function touch(){p.updated=new Date().toISOString();when.textContent="edited "+noteWhen(p.updated);save();}
+  var title=h("input",{class:"script-title-in note-title-in",placeholder:"Title",value:p.title});
+  title.addEventListener("input",function(){p.title=title.value;touch();});
+  title.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();body.focus();}});
+  var body=h("textarea",{class:"notes-area note-body",placeholder:"Start writing…"});body.value=p.body||"";
+  function grow(){body.style.height="auto";body.style.height=Math.max(body.scrollHeight,window.innerHeight*0.55)+"px";}
+  body.addEventListener("input",function(){p.body=body.value;touch();grow();});
+  app.appendChild(title);app.appendChild(when);app.appendChild(body);
+  setTimeout(grow,0);
 }
 function addResourceLinkModal(existing){
   var ov=h("div",{class:"overlay"});function close(){ov.remove();}
   ov.addEventListener("click",function(e){if(e.target===ov)close();});
-  var label=h("input",{class:"auth-in",placeholder:"label (e.g. CapCut, Notion)",value:existing?existing.label:""});
+  var label=h("input",{class:"auth-in",placeholder:"title (e.g. CapCut, Notion)",value:existing?existing.label:""});
   var url=h("input",{class:"auth-in",placeholder:"paste the link",value:existing?existing.url:""});
   var card=h("div",{class:"glass editor"},[
-    h("div",{class:"ed-hd",html:heart(18)+' <span class="t">'+(existing?"Edit link":"Add software link")+'</span>'}),
+    h("div",{class:"ed-hd",html:heart(18)+' <span class="t">'+(existing?"Edit link":"Add a quick link")+'</span>'}),
     h("p",{class:"ed-sub",style:"margin-bottom:6px"},["One tap away whenever you need it."]),
     label,url,
     h("div",{class:"ed-btns"},[h("button",{class:"soft-btn",onclick:close},["cancel"]),h("button",{class:"solid-btn",onclick:function(){if(existing)editResourceLink(existing.id,label.value,url.value);else addResourceLink(label.value,url.value);close();}},[existing?"save":"add link"])])
