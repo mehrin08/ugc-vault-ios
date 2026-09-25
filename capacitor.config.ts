@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'UGC Vault',
   webDir: 'www',
   // The app loads the live Netlify site, so web updates reach users without a
-  // new App Store build. Native features come from netlify-pages/native.js.
+  // new App Store build. Native features come from web/native.js.
   server: {
     url: 'https://thriving-macaron-6a97f3.netlify.app',
     cleartext: false,
@@ -14,10 +14,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#f9ebde',
-    // Needed for the offline cache (service worker) in the iOS web view.
-    // The matching WKAppBoundDomains list is added to Info.plist by scripts/prepare-ios.sh.
-    limitsNavigationsToAppBoundDomains: true
+    backgroundColor: '#f9ebde'
   },
   plugins: {
     SplashScreen: {
@@ -27,7 +24,8 @@ const config: CapacitorConfig = {
       showSpinner: false
     },
     LocalNotifications: {
-      presentationOptions: ['banner', 'sound', 'list']
+      // While the app is open it shows its own reminder banner, so iOS only plays the sound.
+      presentationOptions: ['sound', 'list']
     }
   }
 };

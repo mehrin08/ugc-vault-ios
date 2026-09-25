@@ -1,15 +1,15 @@
 # Publishing UGC Vault to TestFlight and the App Store
 
-UGC Vault is a Capacitor app. The iOS shell (`ios/`) loads your live Netlify site and adds native iPhone features on top:
+UGC Vault is a Capacitor app. The iOS shell (`ios/`) loads your live Netlify site (`web/` in this repo) and adds native iPhone features on top:
 
 | Feature | Where it lives |
 |---|---|
-| Reminder notifications: daily tasks, Sunday batch plan, Friday payment check-in | `netlify-pages/native.js` + `@capacitor/local-notifications` |
-| Per-task reminders and timers from the tasks tab | `native.js`: hook up your buttons with `WEB-APP-NOTIFICATIONS.md` |
-| Haptic taps when you tick off tasks | `native.js` + `@capacitor/haptics` |
-| Works offline (cached app) + offline banner | `netlify-pages/sw.js`, `native.js` + `@capacitor/network` |
-| Branded offline screen instead of a blank page | `www/offline.html` |
+| Task reminders become real iPhone notifications, even when the app is closed | `web/index.html` + `web/native.js` + `@capacitor/local-notifications` |
+| Optional daily / Sunday / Friday nudges | `web/native.js` |
+| Haptic taps when you tick off tasks | `web/native.js` + `@capacitor/haptics` |
+| Offline banner + branded offline screen instead of a blank page | `web/native.js`, `www/offline.html` |
 | App icon + splash screen | `assets/` |
+| In-app account deletion (Apple requires it for apps with sign-up) | `web/index.html` + one Supabase SQL function |
 
 Apple approves apps like this when they do more than a plain website. These features are what get it past **Guideline 4.2 (Minimum Functionality)**.
 
@@ -38,28 +38,34 @@ Your old `ugc-vault-ios` folder has an older `ios` folder that doesn't include t
 
 ---
 
-## 2. Update your Netlify site (important: the native features live here)
+## 2. Update your Netlify site
 
-Copy these 4 files from `netlify-pages/` into the folder you deploy to Netlify, next to its `index.html`:
+The `web/` folder has the new version of your site: the calmer design, iPhone notifications and account deletion.
 
-- `native.js`: notifications, haptics, offline banner
-- `sw.js`: offline caching
-- `privacy.html` and `support.html`: Apple requires both as live pages
+1. **Copy these 5 files from `web/`** into the folder you deploy to Netlify, replacing the old `index.html`:
+   `index.html`, `music.mp3`, `native.js`, `privacy.html`, `support.html`.
+   **Keep your existing `sw.js`**; web push notifications use it.
+2. **Redeploy.** For drag-and-drop, go to Netlify → your site → **Deploys** and drag the whole folder in.
+3. **Add the delete-account function in Supabase**: Supabase → your project → **SQL Editor** → New query, paste this and click **Run**:
+   ```sql
+   create or replace function public.delete_my_account() returns void
+   language plpgsql security definer set search_path = public as $$
+   begin
+     if to_regclass('public.push_subscriptions') is not null then
+       execute 'delete from public.push_subscriptions where user_id = $1' using auth.uid();
+     end if;
+     delete from public.checklists where user_id = auth.uid();
+     delete from auth.users where id = auth.uid();
+   end; $$;
+   revoke all on function public.delete_my_account() from public, anon;
+   grant execute on function public.delete_my_account() to authenticated;
+   ```
+4. Check these open:
+   - https://thriving-macaron-6a97f3.netlify.app/privacy.html
+   - https://thriving-macaron-6a97f3.netlify.app/support.html
+5. **Make a demo account for Apple.** Sign up in the app with a new email (e.g. `review@…`), then add a few lists, tasks and a deal. Apple's reviewer signs in with it.
 
-Then open your site's `index.html` and add this line just before `</body>`:
-
-```html
-<script src="/native.js" defer></script>
-```
-
-To make the ⏰ / "set a timer" / "phone notifications" buttons in the tasks tab schedule notifications, follow **`WEB-APP-NOTIFICATIONS.md`**. That takes one attribute per button.
-
-Redeploy. For drag-and-drop, go to Netlify → your site → **Deploys** and drag the folder in. Then check:
-- https://thriving-macaron-6a97f3.netlify.app/privacy.html
-- https://thriving-macaron-6a97f3.netlify.app/support.html
-- https://thriving-macaron-6a97f3.netlify.app/native.js (shows code, not a 404)
-
-`native.js` does nothing in a normal browser apart from offline caching, so your website stays the same.
+`native.js` does nothing in a normal browser, so the website keeps its own web push.
 
 ---
 
@@ -87,12 +93,11 @@ The first time, Xcode spends a minute fetching packages (bottom-left progress ba
 3. **General** tab: Version `1.0`, Build `1` (already set). Increase **Build** on every upload.
 4. Test on a simulator: pick **iPhone 16 Pro Max** at the top and press ▶︎ (⌘R). Check that:
    - the splash shows, then your dashboard loads
-   - after about 3 seconds the **"Never miss a batch day"** sheet appears. Tap **Turn on reminders** and allow.
-   - tapping ⏰ on a task shows the "Remind me about…" sheet (after you've wired the buttons with `WEB-APP-NOTIFICATIONS.md`)
-   - "phone notifications" (or the floating bell, if you haven't wired that button) opens reminder settings
-5. Take screenshots now, while the simulator is open: press **⌘S** on each screen (dashboard, checklist, reminder sheet). They save to your Desktop at the 6.9" size Apple wants.
+   - menu (top right) → phone notifications → **turn on notifications**, and allow
+   - on a task, ⋯ → reminder → set a time a minute ahead, close the app, and the notification arrives
+5. Take screenshots now, while the simulator is open, signed in to the demo account: press **⌘S** on each screen (home, tasks, a script, phone notifications). They save to your Desktop at the 6.9" size Apple wants.
 
-Already set up for you: iPhone-only, portrait, encryption export answer (`ITSAppUsesNonExemptEncryption = NO`), app-bound domains for offline mode.
+Already set up for you: iPhone-only, portrait, and the encryption export answer (`ITSAppUsesNonExemptEncryption = NO`).
 
 ---
 
@@ -126,10 +131,10 @@ In App Store Connect → your app → **App Store** tab → version 1.0, paste e
 
 - Promo text, description, keywords, support and marketing URLs, copyright
 - **Screenshots**: the 6.9" set from step 4 (3–10 images). Include one showing the reminders sheet; it helps show native features.
-- **App Privacy**: **Data Not Collected**
+- **App Privacy**: answer as in the table in `app-store-listing.md` (email, user content, user ID; none used for tracking)
 - **Age Rating**: answer "None"/"No" to everything → 4+
 - **Build**: click **+** and choose your upload
-- **App Review Information**: no sign-in; paste the review notes
+- **App Review Information**: sign-in required; enter the demo account's email and password, then paste the review notes
 - **Add for Review** → **Submit**. Review usually takes 1–3 days.
 
 ---
@@ -165,5 +170,6 @@ Keep the app's core purpose the same when you change the website. Apple can pull
 | "Redundant binary upload" | Increase the **Build** number. |
 | Package resolution errors in Xcode | File → Packages → **Reset Package Caches**, then build again. |
 | Offline screen shows even with internet | The Netlify site is down or the URL changed. Update `server.url` in `capacitor.config.ts` and `APP_URL` in `www/offline.html`. |
-| No reminder sheet / bell in the app | `native.js` isn't loading. Check step 2 (the `<script>` line and the file at `/native.js`). |
-| Notifications never arrive | iPhone Settings → UGC Vault → Notifications → Allow. Then set them again from the bell. |
+| "phone notifications" still says "Add to Home Screen" in the app | `native.js` isn't loading. Check `native.js` was uploaded next to `index.html` (step 2). |
+| "couldn't delete your account" | The Supabase SQL function from step 2 hasn't been run yet. |
+| Notifications never arrive | iPhone Settings → UGC Vault → Notifications → Allow. Then open the app once so it reschedules them. |

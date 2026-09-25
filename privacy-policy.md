@@ -2,51 +2,54 @@
 
 _Last updated: September 25, 2026_
 
-UGC Vault ("the App") is a personal productivity tool for content creators to
-manage brand partnerships, campaigns, earnings and content batching. The App is
-made by Mehrin Reza Rim ("we", "us").
+UGC Vault ("the App") is a productivity tool for content creators to manage
+brand partnerships, campaigns, scripts, earnings and content batching. The App
+is made by Mehrin Reza Rim ("we", "us").
 
 ## Information We Collect
-We do not collect personal information. The App has no account sign-up and does
-not ask for your name, email, location, contacts, photos or device identifiers.
+**Account information.** To use the App you create an account with your email
+address and a password. If you add your name, we store that too.
 
-The business information you type into the App (brand names, campaign details,
-payment amounts, earnings goals and task lists) stays on your device.
+**Content you add.** The task lists, scripts, hooks, captions, notes, links,
+brand deals, payment records and goals you enter are stored with your account
+so they sync across your devices.
 
-## How Your Information Is Used
-The information you enter is used only to power the App's features on your
-device: the earnings-goal ring, stat tiles, weekly batching checklist and
-task lists. We never see it, sell it, share it or use it for advertising.
+**Notification settings.** If you turn on notifications in a web browser, we
+store a push subscription (a technical address for your browser) and your time
+zone so reminders arrive at the right time. In the iPhone app, reminders are
+scheduled on your device and nothing extra is sent to us.
 
-## Notifications
-If you turn on reminders, the App schedules them on your iPhone using iOS local
-notifications. Reminder settings are stored on your device and are not sent to
-us or any server. You can change them from the bell button in the App or turn
-them off in iPhone Settings.
+We do not collect your location, contacts, photos, or advertising identifiers,
+and we do not track you across other apps or websites.
 
-## Data Storage
-Your data is stored locally on your device in the App's storage. To let the App
-work offline, a copy of the App's interface (not your data) is cached on your
-device. Nothing you enter is uploaded to our servers. Deleting the App deletes
-this data.
+## How We Use Information
+We use your information only to run the App: to sign you in, save and sync
+your content, and send the reminders you set. We never sell your information,
+share it with advertisers, or use it for advertising.
+
+## Where Your Data Is Stored
+Your account and content are stored with Supabase, our database provider, and
+protected so that only your signed-in account can read them. A copy is also
+kept on your device so the App opens quickly.
 
 ## Third-Party Services
-The App's interface is served from Netlify, our web host. Like any web host,
-Netlify may briefly process standard technical information (such as IP address
-and device type) to deliver the App. See Netlify's privacy policy at
-https://www.netlify.com/privacy/.
+- **Supabase** (supabase.com): sign-in and data storage.
+- **Netlify** (netlify.com): hosts the App's interface. Like any web host, it
+  may briefly process technical information such as IP address to deliver it.
+- **Google Fonts** and **jsDelivr**: deliver fonts and code libraries the App
+  uses. They may see your IP address when these files load.
 
-The App does not use analytics, advertising, tracking or crash-reporting
-services.
+The App does not use analytics, advertising or tracking services.
+
+## Deleting Your Account
+You can delete your account and all of its data at any time in the App:
+**Menu → account → delete account**. This permanently removes your account and
+everything stored with it. You can also email ugcrims@gmail.com and we will
+delete it for you.
 
 ## Children's Privacy
 The App is not directed at children under 13, and we do not knowingly collect
 information from children.
-
-## Your Rights
-Because your data stays on your device, you can view, change or delete it at any
-time within the App, or by deleting the App. For any privacy question or
-request, contact us at ugcrims@gmail.com.
 
 ## Changes to This Policy
 If this policy changes, we will update the "Last updated" date above.

@@ -4,9 +4,11 @@
  * Add to the Netlify site's index.html, just before </body>:
  *   <script src="/native.js" defer></script>
  *
- * Inside the iOS app this adds reminder notifications, haptics, an offline
- * banner and offline caching. In a normal browser it only registers the
- * offline cache and does nothing else.
+ * Inside the iOS app this adds reminder notifications, haptics and an
+ * offline banner. In a normal browser it does nothing.
+ *
+ * Options on the script tag: data-bell="off" hides the floating reminders
+ * button, data-first-run="off" skips the "turn on reminders" prompt.
  *
  * Task reminders: call these from the web app's own buttons (see
  * WEB-APP-NOTIFICATIONS.md). Every function is safe to call; outside the iOS
@@ -20,6 +22,7 @@
  *   UGCVault.listReminders()
  *   UGCVault.requestNotificationPermission()
  *   UGCVault.openReminderSettings()
+ *   UGCVault.syncTaskReminders([{ key, title, body, at }])  // replaces the whole set
  *
  * No-code option: add data-ugc-remind="Task name" (and optionally
  * data-ugc-minutes="25") to any button, or data-ugc-reminder-settings to the
@@ -31,18 +34,13 @@
   var cap = window.Capacitor;
   var isApp = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js').catch(function () {});
-    });
-  }
-
   if (!isApp) {
     var none = function () { return Promise.resolve(null); };
     window.UGCVault = {
       isApp: false, remind: none, startTimer: none, cancelReminder: none,
       listReminders: function () { return Promise.resolve([]); },
       requestNotificationPermission: function () { return Promise.resolve(false); },
+      syncTaskReminders: none,
       openReminderSettings: function () {}
     };
     return;
@@ -267,7 +265,13 @@
     });
   }
 
+  function scriptOption(name) {
+    var script = document.querySelector('script[src*="native.js"]');
+    return script ? script.getAttribute('data-' + name) : null;
+  }
+
   function firstRunPrompt() {
+    if (scriptOption('first-run') === 'off') return;
     if (settings() || store.get('promptShown', false)) return;
     setTimeout(function () {
       store.set('promptShown', true);
@@ -283,7 +287,7 @@
         });
         [
           el('h2', { text: 'Never miss a batch day' }),
-          el('p', { text: 'Get a daily task reminder at 9:00 AM, a Sunday batch-planning nudge and a Friday payment check-in. You can change these anytime with the bell button.' }),
+          el('p', { text: 'Get a daily task reminder at 9:00 AM, a Sunday batch-planning nudge and a Friday payment check-in. You can change these anytime from phone notifications.' }),
           on, later
         ].forEach(function (n) { sheet.appendChild(n); });
       });
@@ -291,8 +295,7 @@
   }
 
   function addBellButton() {
-    var script = document.currentScript || document.querySelector('script[src*="native.js"]');
-    if (script && script.getAttribute('data-bell') === 'off') return;
+    if (scriptOption('bell') === 'off') return;
     // The web app has its own reminders button, so no floating bell needed.
     if (document.querySelector('[data-ugc-reminder-settings]')) return;
     var bell = el('button', { className: 'uv-bell', 'aria-label': 'Reminder settings' });
@@ -557,6 +560,41 @@
     }).catch(function () {});
   }
 
+  // The web app hands over every upcoming reminder; this makes the phone's
+  // schedule match it exactly. iOS keeps at most 64 pending notifications.
+  var MAX_SYNCED = 58;
+  function syncTaskReminders(list) {
+    list = (list || []).slice(0, MAX_SYNCED);
+    return call('LocalNotifications', 'checkPermissions').then(function (res) {
+      var granted = res && res.display === 'granted';
+      var prev = store.get('synced', []);
+      var notifications = [];
+      if (granted) {
+        list.forEach(function (r) {
+          var at = r.at instanceof Date ? r.at : new Date(r.at);
+          if (isNaN(at.getTime()) || at.getTime() < Date.now()) return;
+          notifications.push({
+            id: idFor('sync:' + r.key),
+            title: String(r.title || 'Reminder'),
+            body: String(r.body || ''),
+            schedule: { at: at.toISOString(), allowWhileIdle: true },
+            extra: { kind: 'task', key: String(r.key) }
+          });
+        });
+      }
+      var next = notifications.map(function (n) { return n.id; });
+      var stale = prev.filter(function (id) { return next.indexOf(id) < 0; });
+      var cancel = stale.length
+        ? call('LocalNotifications', 'cancel', { notifications: stale.map(function (id) { return { id: id }; }) }).catch(function () {})
+        : Promise.resolve();
+      return cancel.then(function () {
+        store.set('synced', next);
+        if (!notifications.length) return;
+        return call('LocalNotifications', 'schedule', { notifications: notifications });
+      });
+    }).catch(function () {});
+  }
+
   /* ---------- Offline banner ---------- */
 
   var bannerEl;
@@ -614,6 +652,7 @@
     var s = settings();
     if (s) scheduleReminders(s).catch(function () {});
     call('SplashScreen', 'hide').catch(function () {});
+    document.dispatchEvent(new CustomEvent('ugcvault:ready'));
   }
 
   polyfillWebNotifications();
@@ -625,6 +664,7 @@
     cancelReminder: cancelReminder,
     listReminders: listReminders,
     requestNotificationPermission: ensurePermission,
+    syncTaskReminders: syncTaskReminders,
     openReminderSettings: openReminderSettings
   };
 

@@ -631,6 +631,18 @@ var VAPID_PUBLIC_KEY  = "BE7sXO4ZnWNqyduY20ppawSRySrSg7jKGXBubi8z5AaA0uC_xF5ojb5
 //   alter table public.checklists enable row level security;
 //   create policy "own row" on public.checklists for all
 //     using (auth.uid() = user_id) with check (auth.uid() = user_id);
+// For "delete account" (Apple requires it in apps with sign-up), also run:
+//   create or replace function public.delete_my_account() returns void
+//   language plpgsql security definer set search_path = public as $$
+//   begin
+//     if to_regclass('public.push_subscriptions') is not null then
+//       execute 'delete from public.push_subscriptions where user_id = $1' using auth.uid();
+//     end if;
+//     delete from public.checklists where user_id = auth.uid();
+//     delete from auth.users where id = auth.uid();
+//   end; $$;
+//   revoke all on function public.delete_my_account() from public, anon;
+//   grant execute on function public.delete_my_account() to authenticated;
 // For instant signup (no email step): Supabase → Authentication →
 // Providers → Email → turn OFF "Confirm email".
 // ════════════════════════════════════════════════════════════════
@@ -733,7 +745,7 @@ function cloudSave(b){
     SB.from("checklists").upsert({user_id:USER.id,data:b,updated_at:new Date().toISOString()}).then(function(res){if(res&&res.error)console.warn("cloud save:",res.error.message);});
   },700);
 }
-function save(){var b=stateBlob();writeLocal(b);cloudSave(b);}
+function save(){var b=stateBlob();writeLocal(b);cloudSave(b);syncNativeReminders();}
 function loadState(){
   if(CLOUD&&USER&&SB){
     return SB.from("checklists").select("data").eq("user_id",USER.id).maybeSingle().then(function(res){
@@ -1152,6 +1164,7 @@ function disablePush(){
   }).then(function(){flash("notifications off");}).catch(function(e){console.error(e);});
 }
 function openPushModal(){
+  if(nativeApp()){openNativeNotifModal();return;}
   var ov=h("div",{class:"overlay"});function close(){ov.remove();}
   ov.addEventListener("click",function(e){if(e.target===ov)close();});
   var card=h("div",{class:"glass editor"});
@@ -1161,6 +1174,60 @@ function openPushModal(){
   card.appendChild(h("button",{class:"solid-btn",style:"height:44px;border-radius:14px",html:heart(15)+" enable notifications",onclick:function(){enablePush();close();}}));
   card.appendChild(h("button",{class:"soft-btn",style:"margin-top:10px;width:100%;height:40px;border-radius:14px",onclick:function(){disablePush();close();}},["turn off"]));
   card.appendChild(h("button",{class:"soft-btn",style:"margin-top:10px;width:100%;height:40px;border-radius:14px",onclick:close},["cancel"]));
+  ov.appendChild(card);document.body.appendChild(ov);
+}
+
+// ── iPhone app: task reminders become real iOS notifications ──
+// Inside the App Store app, native.js provides window.UGCVault. Web push needs
+// "Add to Home Screen", which doesn't apply there, so reminders are scheduled
+// on the phone instead and fire even when the app is closed.
+function nativeApp(){return !!(window.UGCVault&&window.UGCVault.isApp);}
+function atToday(hhmm,dayOffset){var p=hhmm.split(":"),d=new Date();d.setDate(d.getDate()+(dayOffset||0));d.setHours(+p[0],+p[1],0,0);return d;}
+// Every reminder time in the next two days, in the same shape tick() uses.
+// Tasks reset each morning, so tomorrow includes tasks that are done today.
+function reminderOccurrences(){
+  var out=[],now=Date.now();
+  [0,1].forEach(function(day){
+    S.lists.forEach(function(l){l.subs.forEach(function(s){
+      if(day===0&&s.done)return;
+      var times=[];
+      if(day===0&&s.snooze)times.push(s.snooze);
+      if(s.remind){
+        if(!s.every)times.push(s.remind);
+        else{var st=toMin(s.remind),un=s.until?toMin(s.until):(S.win.end?toMin(S.win.end):1439);for(var m=st;m<=un&&m<1440;m+=s.every)times.push(pad2(Math.floor(m/60))+":"+pad2(m%60));}
+      }
+      times.forEach(function(t){
+        if(!inWindow(t,S.win.start,S.win.end))return;
+        var at=atToday(t,day);if(at.getTime()<=now+30000)return;
+        out.push({key:s.id+"@"+at.toISOString(),title:"💗 "+s.title,body:l.title+" · a little moment for you",at:at});
+      });
+    });});
+  });
+  return out.sort(function(a,b){return a.at-b.at;});
+}
+var nativeSyncTimer=null;
+function syncNativeReminders(){
+  if(!nativeApp()||!window.__appStarted)return; // wait until the saved lists have loaded
+  clearTimeout(nativeSyncTimer);
+  nativeSyncTimer=setTimeout(function(){window.UGCVault.syncTaskReminders(reminderOccurrences());},800);
+}
+document.addEventListener("ugcvault:ready",syncNativeReminders);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)syncNativeReminders();});
+function openNativeNotifModal(){
+  var ov=h("div",{class:"overlay"});function close(){ov.remove();}
+  ov.addEventListener("click",function(e){if(e.target===ov)close();});
+  var card=h("div",{class:"glass editor"});
+  card.appendChild(h("div",{class:"ed-hd",html:bellHeart(19)+' <span class="t">Phone notifications</span>'}));
+  card.appendChild(h("p",{class:"ed-sub",style:"line-height:1.55;margin-bottom:16px"},["Get a notification on your iPhone when a task reminder is due, even when UGC Vault is closed. Set a reminder on any task with ⋯ → reminder."]));
+  card.appendChild(h("button",{class:"solid-btn",style:"height:44px;border-radius:14px;width:100%;flex:none",html:heart(15)+" turn on notifications",onclick:function(){
+    close();
+    window.UGCVault.requestNotificationPermission().then(function(ok){
+      if(ok){syncNativeReminders();flash(heart(14)+" notifications on",true);}
+      else flash("notifications are off — turn them on in iPhone Settings → UGC Vault");
+    });
+  }}));
+  card.appendChild(h("button",{class:"soft-btn",style:"margin-top:10px;width:100%;height:44px;border-radius:14px;flex:none",onclick:function(){close();window.UGCVault.openReminderSettings();}},["daily & weekly nudges"]));
+  card.appendChild(h("button",{class:"soft-btn",style:"margin-top:10px;width:100%;height:40px;border-radius:14px;flex:none",onclick:close},["close"]));
   ov.appendChild(card);document.body.appendChild(ov);
 }
 
@@ -1245,7 +1312,7 @@ function tick(){
   });});
   if(changed){save();
     if(hit){showBanner(hit);
-      if(typeof Notification!=="undefined"&&Notification.permission==="granted"){try{new Notification("\uD83D\uDC97 "+hit.title,{body:hit.listTitle+" · a little moment for you"});}catch(e){}}
+      if(!nativeApp()&&typeof Notification!=="undefined"&&Notification.permission==="granted"){try{new Notification("\uD83D\uDC97 "+hit.title,{body:hit.listTitle+" · a little moment for you"});}catch(e){}}
     }
   }
 }
@@ -2383,8 +2450,21 @@ function accountMenu(){
   card.appendChild(h("div",{class:"ed-hd",html:heart(18)+' <span class="t">Account</span>'}));
   card.appendChild(h("p",{class:"ed-sub",style:"line-height:1.55;margin-bottom:16px"},[(USER&&USER.email?USER.email:"signed in")+" · your lists sync to this account on any device you log in on."]));
   card.appendChild(h("button",{class:"soft-btn",style:"height:48px;border-radius:14px;width:100%;flex:none",onclick:function(){close();SB.auth.signOut().then(function(){location.reload();});}},["log out"]));
+  card.appendChild(h("button",{class:"soft-btn",style:"height:44px;border-radius:14px;margin-top:8px;width:100%;flex:none;color:#C0476F",onclick:function(){close();deleteAccount();}},["delete account"]));
   card.appendChild(h("button",{class:"soft-btn",style:"height:44px;border-radius:14px;margin-top:8px;width:100%;flex:none",onclick:close},["close"]));
   ov.appendChild(card);document.body.appendChild(ov);
+}
+// Permanently deletes the signed-in account and its data (needs the
+// delete_my_account SQL function from the setup notes at the top of this file).
+function deleteAccount(){
+  confirmModal("Delete your account and all your UGC Vault data? This can\u2019t be undone.",function(){
+    SB.rpc("delete_my_account").then(function(res){
+      if(res.error){console.error(res.error);flash("couldn\u2019t delete your account \u2014 email ugcrims@gmail.com and we\u2019ll do it for you");return;}
+      try{localStorage.removeItem(cacheKey());}catch(e){}
+      if(nativeApp())window.UGCVault.syncTaskReminders([]);
+      SB.auth.signOut().then(function(){location.reload();});
+    });
+  });
 }
 function showSetup(){
   var scr=screenWrap();
@@ -2403,7 +2483,8 @@ function startApp(){
   prevAllDone=flat.length>0&&flat.every(function(s){return s.done;});
   S.tab="home";
   if(!window.__fx){window.__fx=1;document.addEventListener("click",onGlobalClick,true);}
-  render();tick();setInterval(tick,20000);
+  window.__appStarted=true;
+  render();tick();setInterval(tick,20000);syncNativeReminders();
   if(CLOUD&&USER)document.addEventListener("visibilitychange",function(){if(!document.hidden)loadState().then(render);});
 }
 (function(){
@@ -2416,5 +2497,7 @@ function startApp(){
   });
 })();
 </script>
+<!-- iPhone app features (notifications, haptics). Does nothing in a normal browser. -->
+<script src="/native.js" data-bell="off" data-first-run="off" defer></script>
 </body>
 </html>
