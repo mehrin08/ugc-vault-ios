@@ -1,35 +1,24 @@
 #!/usr/bin/env bash
 # Run on your Mac from the project root: ./scripts/prepare-ios.sh
-# Installs dependencies, copies www/ into the iOS project, and opens Xcode.
+# Installs dependencies, syncs the iOS project, and opens Xcode.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-command -v node >/dev/null || { echo "Node.js is missing. Install it from https://nodejs.org (LTS)."; exit 1; }
+command -v node >/dev/null || { echo "Node.js is missing. Install the LTS version from https://nodejs.org, then re-run."; exit 1; }
+NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
+[ "$NODE_MAJOR" -ge 22 ] || { echo "Node.js 22 or newer is needed (you have $(node -v)). Install the LTS version from https://nodejs.org."; exit 1; }
 command -v xcodebuild >/dev/null || { echo "Xcode is missing. Install it from the Mac App Store, open it once, then re-run."; exit 1; }
-
-if ! command -v pod >/dev/null; then
-  echo "CocoaPods not found. Installing with Homebrew (needs https://brew.sh)..."
-  brew install cocoapods
-fi
-
-# Capacitor needs a www/index.html even when the app loads server.url.
-if [ ! -f www/index.html ]; then
-  mkdir -p www
-  printf '<!doctype html><meta charset="utf-8"><title>UGC Vault</title>\n' > www/index.html
-fi
 
 npm install
 
-[ -d ios ] || npx cap add ios
+# Rebuild the icon and splash screen from assets/ (skip with SKIP_ASSETS=1).
+if [ "${SKIP_ASSETS:-0}" != "1" ]; then
+  npm run assets
+fi
+
 npx cap sync ios
-
-# Skip the "Missing Compliance" (export encryption) question on every TestFlight upload.
-PLIST=ios/App/App/Info.plist
-/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
-
 npx cap open ios
 
 echo
-echo "Xcode is opening. Next: follow the 'In Xcode' steps in TESTFLIGHT.md."
+echo "Xcode is opening. Next: follow step 3 ('In Xcode') in TESTFLIGHT.md."

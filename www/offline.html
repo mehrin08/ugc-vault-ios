@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UGC Vault</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+         padding: 24px; box-sizing: border-box; text-align: center; background: #15101f; color: #f5f5f7;
+         font: 17px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; }
+  img { width: 96px; height: 96px; border-radius: 22px; margin-bottom: 24px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  p { margin: 0 0 28px; color: #b3adc2; max-width: 320px; }
+  button { border: 0; border-radius: 14px; padding: 15px 36px; font: 600 17px -apple-system, sans-serif; background: #ff5a5f; color: #fff; }
+</style>
+</head>
+<body>
+  <img src="icon.png" alt="">
+  <h1>You're offline</h1>
+  <p>UGC Vault needs a connection the first time it opens. Connect to Wi-Fi or mobile data and try again.</p>
+  <button id="retry">Try again</button>
+  <script>
+    var APP_URL = 'https://thriving-macaron-6a97f3.netlify.app';
+    function retry() { location.href = APP_URL; }
+    document.getElementById('retry').addEventListener('click', retry);
+    window.addEventListener('online', retry);
+  </script>
+</body>
+</html>

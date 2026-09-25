@@ -32,6 +32,15 @@ FEATURES
 • Weekly content-batching checklist grouped by client
 • Today's tasks and upcoming batch deadlines at a glance
 
+REMINDERS THAT KEEP YOU ON TRACK
+• Daily task reminder at the time you choose
+• Sunday nudge to plan your weekly content batch
+• Friday payment check-in so no invoice slips through
+
+MADE FOR IPHONE
+• Works offline: open your dashboard anywhere, even without signal
+• Satisfying haptic feedback as you tick off deliverables
+
 PRIVATE BY DESIGN
 No sign-up, no ads, no tracking. Your brand deals and earnings stay on your device.
 
@@ -68,8 +77,17 @@ database, update both.
 > UGC Vault is a personal productivity dashboard for UGC (user-generated content)
 > creators to track brand partnerships, payments and weekly content batching.
 > No account or login is required. All data is entered by the user and stored
-> locally on the device. To test: open the app, add a brand/campaign, then check
-> the earnings ring and weekly batching checklist update.
+> locally on the device.
+>
+> Native iOS features to test:
+> 1. Local notifications: about 3 seconds after first launch, tap "Turn on
+>    reminders" and allow notifications. Tap the pink bell button (bottom right)
+>    to change the daily reminder time or toggle the weekly batch-planning and
+>    payment check-in reminders.
+> 2. Offline support: after the first launch, enable Airplane Mode and reopen
+>    the app. The dashboard still loads from the on-device cache and an offline
+>    banner appears.
+> 3. Haptic feedback when ticking off checklist items and tapping buttons.
 
 ## Export Compliance
 Uses encryption: **No** (standard HTTPS only). `ITSAppUsesNonExemptEncryption`
@@ -84,11 +102,13 @@ weekly content batching in one dashboard.
 
 ### What to Test
 Add a few brands and campaigns, mark payments as received, and tick off
-batching tasks. Tell us anything that looks off or feels slow.
+batching tasks. Turn on reminders (bell button) and check they arrive. Try it
+in Airplane Mode. Tell us anything that looks off or feels slow.
 
 ### Feedback Email
 ugcrims@gmail.com
 
 ## Screenshots needed
 - iPhone 6.9" (1320 × 2868): 3–10 images. Use the iPhone 16 Pro Max simulator and press ⌘S.
-- iPad 13" (2064 × 2752): only if you leave iPad support on in Xcode.
+- Not needed for iPad: the app is set to iPhone only.
+- Tip: make one screenshot show the reminders sheet. Showing native features helps review.

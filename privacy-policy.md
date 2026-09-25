@@ -18,9 +18,17 @@ The information you enter is used only to power the App's features on your
 device: the earnings-goal ring, stat tiles, weekly batching checklist and
 task lists. We never see it, sell it, share it or use it for advertising.
 
+## Notifications
+If you turn on reminders, the App schedules them on your iPhone using iOS local
+notifications. Reminder settings are stored on your device and are not sent to
+us or any server. You can change them from the bell button in the App or turn
+them off in iPhone Settings.
+
 ## Data Storage
-Your data is stored locally on your device in the App's storage. It is not
-uploaded to our servers. Deleting the App deletes this data.
+Your data is stored locally on your device in the App's storage. To let the App
+work offline, a copy of the App's interface (not your data) is cached on your
+device. Nothing you enter is uploaded to our servers. Deleting the App deletes
+this data.
 
 ## Third-Party Services
 The App's interface is served from Netlify, our web host. Like any web host,

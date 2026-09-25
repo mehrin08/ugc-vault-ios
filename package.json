@@ -11,11 +11,20 @@
   "scripts": {
     "ios:prepare": "./scripts/prepare-ios.sh",
     "ios:sync": "cap sync ios",
-    "ios:open": "cap open ios"
+    "ios:open": "cap open ios",
+    "assets": "node scripts/make-assets.js && capacitor-assets generate --ios --iconBackgroundColor '#15101f' --splashBackgroundColor '#15101f' --splashBackgroundColorDark '#15101f'"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
-    "@capacitor/ios": "^8.5.2"
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "typescript": "^7.0.2"
   }
 }
