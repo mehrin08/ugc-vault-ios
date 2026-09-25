@@ -33,6 +33,8 @@ FEATURES
 • Today's tasks and upcoming batch deadlines at a glance
 
 REMINDERS THAT KEEP YOU ON TRACK
+• Tap the alarm on any task to get reminded in 15 minutes, tonight or any time you pick
+• Focus timers for each brand that notify you when time's up
 • Daily task reminder at the time you choose
 • Sunday nudge to plan your weekly content batch
 • Friday payment check-in so no invoice slips through
@@ -81,9 +83,11 @@ database, update both.
 >
 > Native iOS features to test:
 > 1. Local notifications: about 3 seconds after first launch, tap "Turn on
->    reminders" and allow notifications. Tap the pink bell button (bottom right)
->    to change the daily reminder time or toggle the weekly batch-planning and
->    payment check-in reminders.
+>    reminders" and allow notifications. In the Tasks tab, tap the alarm icon
+>    next to any task and choose a time (e.g. "In 15 min") to get a reminder
+>    for that task; "set a timer" on a brand card starts a focus timer that
+>    notifies you when it ends. "phone notifications" changes the daily
+>    reminder time and the weekly batch-planning / payment reminders.
 > 2. Offline support: after the first launch, enable Airplane Mode and reopen
 >    the app. The dashboard still loads from the on-device cache and an offline
 >    banner appears.

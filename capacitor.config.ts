@@ -14,7 +14,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#15101f',
+    backgroundColor: '#f9ebde',
     // Needed for the offline cache (service worker) in the iOS web view.
     // The matching WKAppBoundDomains list is added to Info.plist by scripts/prepare-ios.sh.
     limitsNavigationsToAppBoundDomains: true
@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 1500,
       launchAutoHide: true,
-      backgroundColor: '#15101f',
+      backgroundColor: '#f9ebde',
       showSpinner: false
     },
     LocalNotifications: {

@@ -5,6 +5,7 @@ UGC Vault is a Capacitor app. The iOS shell (`ios/`) loads your live Netlify sit
 | Feature | Where it lives |
 |---|---|
 | Reminder notifications: daily tasks, Sunday batch plan, Friday payment check-in | `netlify-pages/native.js` + `@capacitor/local-notifications` |
+| Per-task reminders and timers from the tasks tab | `native.js`: hook up your buttons with `WEB-APP-NOTIFICATIONS.md` |
 | Haptic taps when you tick off tasks | `native.js` + `@capacitor/haptics` |
 | Works offline (cached app) + offline banner | `netlify-pages/sw.js`, `native.js` + `@capacitor/network` |
 | Branded offline screen instead of a blank page | `www/offline.html` |
@@ -51,6 +52,8 @@ Then open your site's `index.html` and add this line just before `</body>`:
 <script src="/native.js" defer></script>
 ```
 
+To make the ⏰ / "set a timer" / "phone notifications" buttons in the tasks tab schedule notifications, follow **`WEB-APP-NOTIFICATIONS.md`**. That takes one attribute per button.
+
 Redeploy. For drag-and-drop, go to Netlify → your site → **Deploys** and drag the folder in. Then check:
 - https://thriving-macaron-6a97f3.netlify.app/privacy.html
 - https://thriving-macaron-6a97f3.netlify.app/support.html
@@ -85,7 +88,8 @@ The first time, Xcode spends a minute fetching packages (bottom-left progress ba
 4. Test on a simulator: pick **iPhone 16 Pro Max** at the top and press ▶︎ (⌘R). Check that:
    - the splash shows, then your dashboard loads
    - after about 3 seconds the **"Never miss a batch day"** sheet appears. Tap **Turn on reminders** and allow.
-   - the pink bell button (bottom-right) opens reminder settings
+   - tapping ⏰ on a task shows the "Remind me about…" sheet (after you've wired the buttons with `WEB-APP-NOTIFICATIONS.md`)
+   - "phone notifications" (or the floating bell, if you haven't wired that button) opens reminder settings
 5. Take screenshots now, while the simulator is open: press **⌘S** on each screen (dashboard, checklist, reminder sheet). They save to your Desktop at the 6.9" size Apple wants.
 
 Already set up for you: iPhone-only, portrait, encryption export answer (`ITSAppUsesNonExemptEncryption = NO`), app-bound domains for offline mode.
@@ -134,14 +138,14 @@ In App Store Connect → your app → **App Store** tab → version 1.0, paste e
 
 Yes, you can change it anytime:
 
-1. Replace **`assets/icon-only.png`** with your new logo: 1024×1024 PNG, square, no transparency, no rounded corners (iOS rounds them).
-   To change the splash screen too, replace `assets/splash.png` and `assets/splash-dark.png` (2732×2732, logo centered with lots of empty space).
-2. Run `SKIP_ASSETS=1 npx capacitor-assets generate --ios` (or `npm run assets` if you edited `assets/logo.svg` instead of the PNGs).
-3. Increase **Build**, then Archive and upload again.
+1. Replace **`assets/logo.png`** with your new logo: a square PNG, 1024×1024, no transparency, no rounded corners (iOS rounds them).
+   Keep the background a plain colour or a top-to-bottom gradient; the splash screen is built from it automatically.
+2. Run `npm run assets`. This rebuilds the app icon, the splash screen and the offline-screen icon.
+3. Increase **Build** in Xcode, then Archive and upload again.
 
-Users get the new icon when they install the update. On the App Store page, the icon changes when that version goes live.
+Users get the new icon when they install the update. On the App Store page, it changes when that version goes live.
 
-**Designing in Canva:** make a 1024×1024 design, fill the whole square (no rounded corners), download as **PNG**, and rename it `icon-only.png`.
+**Canva:** design at 1024×1024, fill the whole square, and download as **PNG**. Rename it `logo.png` and drop it in `assets/`.
 
 ---
 

@@ -12,7 +12,7 @@
     "ios:prepare": "./scripts/prepare-ios.sh",
     "ios:sync": "cap sync ios",
     "ios:open": "cap open ios",
-    "assets": "node scripts/make-assets.js && capacitor-assets generate --ios --iconBackgroundColor '#15101f' --splashBackgroundColor '#15101f' --splashBackgroundColorDark '#15101f'"
+    "assets": "node scripts/make-assets.js && capacitor-assets generate --ios --iconBackgroundColor '#f9ebde' --splashBackgroundColor '#f9ebde' --splashBackgroundColorDark '#f9ebde'"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",
