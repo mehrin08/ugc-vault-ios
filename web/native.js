@@ -23,6 +23,7 @@
  *   UGCVault.requestNotificationPermission()
  *   UGCVault.openReminderSettings()
  *   UGCVault.syncTaskReminders([{ key, title, body, at }])  // replaces the whole set
+ *   UGCVault.subscription.products(ids) / status(ids) / purchase(id) / restore() / manage()
  *
  * No-code option: add data-ugc-remind="Task name" (and optionally
  * data-ugc-minutes="25") to any button, or data-ugc-reminder-settings to the
@@ -41,6 +42,7 @@
       listReminders: function () { return Promise.resolve([]); },
       requestNotificationPermission: function () { return Promise.resolve(false); },
       syncTaskReminders: none,
+      subscription: null,
       openReminderSettings: function () {}
     };
     return;
@@ -595,6 +597,58 @@
     }).catch(function () {});
   }
 
+  /* ---------- Subscription (App Store in-app purchase) ---------- */
+
+  // Talks to StoreKit through @capgo/native-purchases. The web app decides
+  // which product ids to show and what to lock; this only asks the App Store.
+  var subscription = {
+    products: function (ids) {
+      return call('NativePurchases', 'getProducts', { productIdentifiers: ids, productType: 'subs' })
+        .then(function (r) { return (r && r.products) || []; });
+    },
+    // { active, productId, expires, willCancel, isTrial, usedTrialBefore }
+    status: function (ids) {
+      return Promise.all([
+        call('NativePurchases', 'getPurchases', { productType: 'subs', onlyCurrentEntitlements: true }),
+        call('NativePurchases', 'getPurchases', { productType: 'subs' }).catch(function () { return { purchases: [] }; })
+      ]).then(function (res) {
+        var mine = function (t) { return t && ids.indexOf(t.productIdentifier) >= 0; };
+        var current = ((res[0] && res[0].purchases) || []).filter(mine).filter(function (t) {
+          if (t.revocationDate) return false;
+          if (t.subscriptionState === 'expired' || t.subscriptionState === 'revoked') return false;
+          if (t.subscriptionState === 'inGracePeriod' || t.subscriptionState === 'subscribed') return true;
+          return t.isActive !== false;
+        });
+        var history = ((res[1] && res[1].purchases) || []).filter(mine);
+        var best = current.sort(function (a, b) { return String(b.expirationDate || '').localeCompare(String(a.expirationDate || '')); })[0];
+        var result = {
+          active: !!best,
+          productId: best ? best.productIdentifier : null,
+          expires: best ? best.expirationDate || null : null,
+          willCancel: best ? best.willCancel === true : false,
+          isTrial: best ? best.isTrialPeriod === true : false,
+          usedTrialBefore: history.length > 0
+        };
+        store.set('sub', { active: result.active, expires: result.expires, checked: Date.now() });
+        return result;
+      }).catch(function (e) {
+        // App Store unreachable: trust the last answer until its expiry date.
+        var last = store.get('sub', null);
+        var stillValid = last && last.active && (!last.expires || new Date(last.expires).getTime() > Date.now());
+        return { active: !!stillValid, offline: true, error: String(e && e.message || e) };
+      });
+    },
+    purchase: function (id) {
+      return call('NativePurchases', 'purchaseProduct', { productIdentifier: id, productType: 'subs' });
+    },
+    restore: function () {
+      return call('NativePurchases', 'restorePurchases');
+    },
+    manage: function () {
+      return call('NativePurchases', 'manageSubscriptions');
+    }
+  };
+
   /* ---------- Offline banner ---------- */
 
   var bannerEl;
@@ -665,6 +719,7 @@
     listReminders: listReminders,
     requestNotificationPermission: ensurePermission,
     syncTaskReminders: syncTaskReminders,
+    subscription: subscription,
     openReminderSettings: openReminderSettings
   };
 

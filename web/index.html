@@ -508,6 +508,31 @@ html[data-theme="dark"] .lh-count{background:rgba(255,255,255,.08)}
 .menu-item.danger,.menu-item.danger .mi-ic{color:#C0476F}
 @media(prefers-reduced-motion:reduce){.editor.sheet,.row-more{animation:none}.chev{transition:none}}
 .deal-meta1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.3px}
+
+/* ═══ subscription screen ═══ */
+.paywall{justify-content:flex-start;padding:calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom))}
+.paywall ~ .overlay{z-index:85}
+.pw-page{width:100%;max-width:400px;margin:0 auto;display:flex;flex-direction:column;align-items:stretch}
+.pw-hero{text-align:center;margin-top:8px}
+.pw-heart{display:flex;justify-content:center;margin-bottom:8px}
+.pw-title{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-size:30px;line-height:1.1;color:var(--ink);text-align:center;margin-top:14px}
+.pw-sub{font-family:DM Sans,Outfit;font-size:13.5px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5}
+.pw-perks{list-style:none;margin:22px 4px 6px;display:flex;flex-direction:column;gap:11px}
+.pw-perks li{display:flex;align-items:flex-start;gap:10px;font-family:DM Sans,Outfit;font-size:14px;color:var(--ink);line-height:1.4}
+.pw-perks li .xh{margin-top:2px;flex-shrink:0}
+.pw-plans{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.pw-loading{font-family:DM Sans,Outfit;font-size:12.5px;color:var(--muted);text-align:center;padding:18px 0}
+.pw-plan{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:16px 16px;border-radius:18px;cursor:pointer;text-align:left;background:var(--glass-bg);border:1.5px solid var(--glass-bd);box-shadow:var(--glass-sh)}
+.pw-plan.on{border-color:var(--accent);background:linear-gradient(135deg,rgba(var(--s1),.45),rgba(var(--s2),.45))}
+.pw-plan-t{font-family:DM Sans,Outfit;font-weight:600;font-size:15px;color:var(--ink)}
+.pw-plan-s{font-family:DM Sans,Outfit;font-size:12px;color:var(--muted);margin-top:2px}
+.pw-plan-p{font-family:DM Sans,Outfit;font-weight:600;font-size:14px;color:var(--accent);white-space:nowrap}
+.pw-badge{position:absolute;top:-10px;right:14px;font-family:DM Sans,Outfit;font-weight:600;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--accent);padding:4px 10px;border-radius:99px}
+.pw-cta{flex:none;width:100%;height:54px;border-radius:16px;margin-top:18px;font-size:15px;font-weight:600;background:var(--accent);text-shadow:none;box-shadow:0 8px 22px rgba(var(--sh),.25)}
+.pw-cta[disabled]{opacity:.6}
+.pw-fine{font-family:Inter;font-size:10.8px;line-height:1.55;color:var(--muted);text-align:center;margin-top:12px}
+.pw-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:10px}
+.pw-links .lock-link{margin-top:6px;font-size:12px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -1231,6 +1256,140 @@ function openNativeNotifModal(){
   ov.appendChild(card);document.body.appendChild(ov);
 }
 
+// ── UGC Vault Pro: 3-day free trial, then monthly or yearly (iPhone app only) ──
+// Products are set up in App Store Connect with a 3-day free trial on each.
+// The website stays free; only the App Store app checks for a subscription.
+var PRO_MONTHLY="com.rims.ugcvault.monthly", PRO_YEARLY="com.rims.ugcvault.yearly";
+var PRO_IDS=[PRO_MONTHLY,PRO_YEARLY];
+var TERMS_URL="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+var PRIVACY_URL="https://thriving-macaron-6a97f3.netlify.app/privacy.html";
+var PRO={checked:false,active:false,status:null};
+function inAppShell(){return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());}
+// native.js loads after this script, so wait for it before talking to the App Store.
+function whenNative(fn){
+  if(window.UGCVault&&window.UGCVault.isApp)return fn();
+  document.addEventListener("ugcvault:ready",function once(){document.removeEventListener("ugcvault:ready",once);fn();});
+}
+function checkAccess(){
+  if(!inAppShell())return;
+  whenNative(function(){
+    window.UGCVault.subscription.status(PRO_IDS).then(function(st){
+      PRO.checked=true;PRO.active=!!st.active;PRO.status=st;
+      if(st.active)closePaywall();else openPaywall(st);
+    });
+  });
+}
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&USER)checkAccess();});
+var paywallEl=null;
+function closePaywall(){if(paywallEl){paywallEl.remove();paywallEl=null;}}
+function periodWord(p){if(!p)return "";var u=p.unit;return u===3||u==="year"?"year":u===2||u==="month"?"month":u===1||u==="week"?"week":"day";}
+function fmtMoney(n,cur){try{return new Intl.NumberFormat(undefined,{style:"currency",currency:cur}).format(n);}catch(e){return cur+" "+n.toFixed(2);}}
+function openPaywall(st){
+  closePaywall();
+  var scr=h("div",{class:"lock-screen paywall",role:"dialog","aria-modal":"true","aria-label":"Subscribe to UGC Vault"});
+  paywallEl=scr;
+  var page=h("div",{class:"pw-page"});
+  page.appendChild(h("div",{class:"pw-hero",html:'<div class="pw-heart">'+heart(44)+'</div><div class="auth-brand"><span class="wm-ugc">UGC</span><span class="wm-vault">Vault</span></div>'}));
+  var eligible=!(st&&st.usedTrialBefore);
+  page.appendChild(h("h1",{class:"pw-title"},[eligible?"Try everything free for 3 days":"Welcome back"]));
+  page.appendChild(h("p",{class:"pw-sub"},[eligible?"Then pick monthly or yearly. Cancel anytime.":"Subscribe to keep running your UGC business in one place."]));
+  var perks=h("ul",{class:"pw-perks"});
+  ["Daily & batching task lists by brand","Reminders on your iPhone, even when the app is closed","Scripts, hooks & captions for every brand","Deals, payments & your monthly earnings goal"].forEach(function(t){perks.appendChild(h("li",{html:heart(13)+" <span>"+esc(t)+"</span>"}));});
+  page.appendChild(perks);
+  var plans=h("div",{class:"pw-plans"},[h("div",{class:"pw-loading"},["loading plans…"])]);
+  page.appendChild(plans);
+  var cta=h("button",{class:"solid-btn pw-cta",disabled:"disabled"},[eligible?"Start free trial":"Subscribe"]);
+  page.appendChild(cta);
+  var fine=h("p",{class:"pw-fine"});
+  page.appendChild(fine);
+  var links=h("div",{class:"pw-links"});
+  var restoreBtn=h("button",{class:"lock-link"},["Restore purchases"]);
+  links.appendChild(restoreBtn);
+  links.appendChild(h("a",{class:"lock-link",href:TERMS_URL,target:"_blank",rel:"noopener"},["Terms of Use"]));
+  links.appendChild(h("a",{class:"lock-link",href:PRIVACY_URL,target:"_blank",rel:"noopener"},["Privacy Policy"]));
+  if(CLOUD&&USER)links.appendChild(h("button",{class:"lock-link",onclick:accountMenu},["Account"]));
+  page.appendChild(links);
+  scr.appendChild(page);
+  document.body.appendChild(scr);
+
+  var chosen=PRO_YEARLY,byId={};
+  function renderFine(){
+    var p=byId[chosen];if(!p){fine.textContent="";return;}
+    var per=periodWord(p.subscriptionPeriod);
+    fine.textContent=(eligible?"3 days free, then "+p.priceString+" per "+per+". ":p.priceString+" per "+per+". ")+
+      "Payment is charged to your Apple Account "+(eligible?"when the free trial ends":"when you confirm")+". "+
+      "The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. "+
+      "Manage or cancel anytime in Settings → your name → Subscriptions.";
+    cta.textContent=eligible?"Start free trial":"Subscribe for "+p.priceString+" / "+per;
+  }
+  function drawPlans(){
+    plans.innerHTML="";
+    var m=byId[PRO_MONTHLY],y=byId[PRO_YEARLY];
+    [[PRO_YEARLY,y],[PRO_MONTHLY,m]].forEach(function(pair){
+      var id=pair[0],p=pair[1];if(!p)return;
+      var isY=id===PRO_YEARLY;
+      var card=h("button",{class:"pw-plan"+(chosen===id?" on":""),"aria-pressed":chosen===id?"true":"false",onclick:function(){chosen=id;drawPlans();renderFine();}});
+      var left=h("div",{class:"pw-plan-l"},[h("div",{class:"pw-plan-t"},[isY?"Yearly":"Monthly"])]);
+      if(isY&&m){
+        var monthsFree=Math.round((m.price*12-p.price)/m.price);
+        left.appendChild(h("div",{class:"pw-plan-s"},["just "+fmtMoney(p.price/12,p.currencyCode)+" a month"]));
+        if(monthsFree>=1)card.appendChild(h("span",{class:"pw-badge"},[monthsFree+" month"+(monthsFree>1?"s":"")+" free"]));
+      }else{
+        left.appendChild(h("div",{class:"pw-plan-s"},["billed monthly"]));
+      }
+      card.appendChild(left);
+      card.appendChild(h("div",{class:"pw-plan-p"},[p.priceString+" / "+(isY?"year":"month")]));
+      plans.appendChild(card);
+    });
+    if(!plans.children.length){
+      plans.appendChild(h("div",{class:"pw-loading"},["Couldn’t load plans. Check your connection and try again."]));
+      plans.appendChild(h("button",{class:"soft-btn",style:"height:44px;border-radius:14px;width:100%;flex:none;margin-top:8px",onclick:function(){openPaywall(st);}},["try again"]));
+    }
+  }
+  whenNative(function(){
+    window.UGCVault.subscription.products(PRO_IDS).then(function(list){
+      list.forEach(function(p){byId[p.identifier]=p;});
+      if(!byId[chosen])chosen=byId[PRO_MONTHLY]?PRO_MONTHLY:PRO_YEARLY;
+      drawPlans();renderFine();
+      if(byId[chosen])cta.removeAttribute("disabled");
+    }).catch(function(){drawPlans();});
+  });
+  function busy(on,label){if(on){cta.setAttribute("disabled","disabled");cta.textContent=label;}else{cta.removeAttribute("disabled");renderFine();}}
+  cta.addEventListener("click",function(){
+    if(!byId[chosen])return;
+    busy(true,"opening the App Store…");
+    window.UGCVault.subscription.purchase(chosen).then(function(){
+      return window.UGCVault.subscription.status(PRO_IDS);
+    }).then(function(s2){
+      if(s2&&s2.active){PRO.active=true;PRO.status=s2;closePaywall();flash(heart(14)+" welcome to UGC Vault",true);}
+      else busy(false);
+    }).catch(function(e){
+      busy(false);
+      var msg=String(e&&e.message||e||"");
+      if(!/cancel/i.test(msg))flash("the purchase didn’t go through — please try again");
+    });
+  });
+  restoreBtn.addEventListener("click",function(){
+    restoreBtn.textContent="restoring…";
+    window.UGCVault.subscription.restore().catch(function(){}).then(function(){
+      return window.UGCVault.subscription.status(PRO_IDS);
+    }).then(function(s2){
+      restoreBtn.textContent="Restore purchases";
+      if(s2&&s2.active){PRO.active=true;PRO.status=s2;closePaywall();flash(heart(14)+" subscription restored",true);}
+      else flash("no active subscription found for this Apple Account");
+    });
+  });
+}
+function subscriptionMenuItem(){
+  if(!inAppShell()||!PRO.status)return null;
+  var st=PRO.status,sub="";
+  if(st.active){
+    var when=st.expires?new Date(st.expires).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+    sub=(st.productId===PRO_YEARLY?"yearly":"monthly")+(st.isTrial?" · trial":"")+(when?(st.willCancel?" · ends ":" · renews ")+when:"");
+  }
+  return {icon:heart(15),label:"subscription",sub:sub,onclick:function(){window.UGCVault.subscription.manage().catch(function(){});}};
+}
+
 // ── inline rename ──
 function startRename(node,val,isTask,onDone){
   var inp=h("input",{class:"rename-in"+(isTask?" task":""),value:val});
@@ -1676,6 +1835,7 @@ function appMenu(){
   items.push({icon:soundIcon(S.sound),label:"tap sounds",sub:S.sound?"on":"off",onclick:function(){S.sound=!S.sound;save();if(S.sound)playChime();render();}});
   items.push({icon:S.mode==="light"?"☾":"🌞",label:S.mode==="light"?"dark mode":"light mode",onclick:toggleMode});
   items.push({icon:BELL,label:"phone notifications",onclick:openPushModal});
+  var subItem=subscriptionMenuItem();if(subItem)items.push(subItem);
   items.push({icon:"⚙️",label:"settings",sub:"music, backup",onclick:settingsMenu});
   menuSheet("Menu",items);
 }
@@ -2485,6 +2645,7 @@ function startApp(){
   if(!window.__fx){window.__fx=1;document.addEventListener("click",onGlobalClick,true);}
   window.__appStarted=true;
   render();tick();setInterval(tick,20000);syncNativeReminders();
+  checkAccess(); // iPhone app: shows the subscribe screen when there's no active subscription or trial
   if(CLOUD&&USER)document.addEventListener("visibilitychange",function(){if(!document.hidden)loadState().then(render);});
 }
 (function(){

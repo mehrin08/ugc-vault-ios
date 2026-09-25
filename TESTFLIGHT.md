@@ -110,6 +110,41 @@ Already set up for you: iPhone-only, portrait, and the encryption export answer 
 
 If the name "UGC Vault" is taken, try "UGC Vault: Creator Hub". The name on the home screen stays "UGC Vault".
 
+4. **Pricing and Availability**: price **Free** (the app is free to download; the subscription is the paid part). Under Availability, pick only the 18 countries listed in `app-store-listing.md`.
+
+---
+
+## 5b. Set up the subscription (3-day free trial, then $4.99/month or $49.99/year)
+
+The app already has the subscribe screen and the lock. The app code expects these exact product IDs.
+
+**First, one time: get paid.** App Store Connect → **Business** → sign the **Paid Apps Agreement**, then add your bank account and tax forms. Apple won't sell subscriptions until this is done. While you're there, apply for the **App Store Small Business Program** (developer.apple.com/app-store/small-business-program) so Apple takes 15% instead of 30%.
+
+**Then create the subscriptions.** Your app → **Monetization → Subscriptions**:
+
+1. **Subscription Group** → **+** → Reference name `UGC Vault Pro`. Add a localization: Display name `UGC Vault Pro`.
+2. In the group, **Create** a subscription:
+   - Reference name `Monthly`, Product ID **`com.rims.ugcvault.monthly`**
+   - Duration **1 Month**
+   - Subscription Prices → **+** → United States **$4.99**. Apple fills in every other country; check them and round (e.g. £4.99, €5.99, CA$6.99, A$7.99).
+   - Availability → the same 18 countries.
+   - Localization: Display name `Monthly`, Description `All of UGC Vault, billed monthly`.
+   - Review Information → screenshot of the subscribe screen (take one in the simulator).
+3. Create a second subscription the same way:
+   - Reference name `Yearly`, Product ID **`com.rims.ugcvault.yearly`**
+   - Duration **1 Year**, price **$49.99** (about 2 months free; the app shows that badge on its own)
+   - Display name `Yearly`, Description `All of UGC Vault, billed yearly`.
+4. **Free trial** on each subscription: **Subscription Prices → Introductory Offers → +** → all 18 countries → start today, no end date → **Free** → **3 Days**.
+5. Put **monthly and yearly in the same group** (as above). That way nobody can accidentally pay for both, and people can switch between them.
+
+**Test it (free) with TestFlight.** Purchases in TestFlight builds use Apple's test mode: nothing is charged, and time runs faster (a month renews every few minutes, so you'll see the trial end and renew quickly). Check:
+- after signing in, the subscribe screen appears
+- **Start free trial** → confirm → the app unlocks
+- menu → **subscription** shows your plan and opens Apple's manage/cancel screen
+- delete and reinstall the app, then use **Restore purchases** on the subscribe screen and it unlocks again
+
+**Submitting:** the first time, attach both subscriptions to the app version: version page → **In-App Purchases and Subscriptions** → **+** → select both. They're reviewed together with the app.
+
 ---
 
 ## 6. Upload to TestFlight
@@ -130,11 +165,12 @@ If the name "UGC Vault" is taken, try "UGC Vault: Creator Hub". The name on the 
 In App Store Connect → your app → **App Store** tab → version 1.0, paste everything from `app-store-listing.md`:
 
 - Promo text, description, keywords, support and marketing URLs, copyright
-- **Screenshots**: the 6.9" set from step 4 (3–10 images). Include one showing the reminders sheet; it helps show native features.
+- **Screenshots**: the 6.9" set from step 4 (3–10 images). Include the subscribe screen and one of the phone notifications screen.
+- **In-App Purchases and Subscriptions**: add the monthly and yearly subscriptions (step 5b)
 - **App Privacy**: answer as in the table in `app-store-listing.md` (email, user content, user ID; none used for tracking)
 - **Age Rating**: answer "None"/"No" to everything → 4+
 - **Build**: click **+** and choose your upload
-- **App Review Information**: sign-in required; enter the demo account's email and password, then paste the review notes
+- **App Review Information**: sign-in required; enter the demo account's email and password, then paste the review notes. Don't subscribe the demo account yourself; the reviewer tests the trial with their own test account.
 - **Add for Review** → **Submit**. Review usually takes 1–3 days.
 
 ---

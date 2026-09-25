@@ -19,6 +19,10 @@ store a push subscription (a technical address for your browser) and your time
 zone so reminders arrive at the right time. In the iPhone app, reminders are
 scheduled on your device and nothing extra is sent to us.
 
+**Purchases.** Subscriptions are bought and billed through Apple. We never see
+your card or payment details; the App only receives from Apple whether your
+subscription is active and when it renews.
+
 We do not collect your location, contacts, photos, or advertising identifiers,
 and we do not track you across other apps or websites.
 
