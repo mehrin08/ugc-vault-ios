@@ -327,9 +327,10 @@ body.script-editing .script-body,body.script-editing .notes-area{background:#fff
 html[data-theme="dark"] .cal-cell.is-sel{background:rgba(var(--s2),.22)}
 .cal-daynum{font-family:DM Sans,Outfit;font-weight:600;font-size:12.5px;color:var(--ink)}
 .cal-dot{width:5px;height:5px;border-radius:50%;position:absolute;bottom:6px}
-.cal-dot-deal{background:#7050C8;left:calc(50% - 8px)}
+.cal-dot-payment{background:#7050C8;left:calc(50% - 8px)}
 .cal-dot-batch{background:#D9683C;left:calc(50% - 1px)}
 .cal-dot-personal{background:#CE4E9C;left:calc(50% + 6px)}
+.cal-count{position:absolute;top:4px;right:4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--accent);color:#fff;font-family:DM Sans,Outfit;font-weight:600;font-size:8.6px;display:flex;align-items:center;justify-content:center;line-height:1}
 .cal-day-panel .t{font-family:DM Sans,Outfit;font-weight:600;font-size:14px;color:var(--ink)}
 .cal-section-lab{font-family:DM Sans,Outfit;font-weight:600;font-size:10.5px;color:var(--muted);letter-spacing:.3px;margin:10px 0 4px;text-transform:uppercase}
 .cal-row{font-family:Inter;font-size:12.6px;color:var(--ink);padding:6px 2px;display:flex;align-items:center;gap:8px}
@@ -398,14 +399,14 @@ body[data-sec="scripts"]{--s1:246,190,208;--s2:232,150,182;--sc1:#F6C1D3;--sc2:#
 body[data-sec="deals"]{--s1:215,201,245;--s2:180,160,232;--sc1:#DACDF5;--sc2:#B7A3EA;--accent:#5B449E;--blob1:#DCD0F7;--blob2:#C7B5EF;--h1:#E9E0FF;--h2:#A98AF0;--h3:#7050C8;--bg:linear-gradient(180deg,#FAF7FE 0%,#F0EAFA 60%,#E8E0F6 100%)}
 body[data-sec="payments"]{--s1:190,232,214;--s2:140,210,182;--sc1:#C4EAD7;--sc2:#8FD0B3;--accent:#2B7358;--blob1:#C9EDDA;--blob2:#A9E0C6;--h1:#D9F6E8;--h2:#6FCBA0;--h3:#2E9C71;--bg:linear-gradient(180deg,#F5FBF8 0%,#E9F6EF 60%,#DFF0E7 100%)}
 body[data-sec="resources"]{--s1:190,222,242;--s2:150,196,232;--sc1:#C5E1F4;--sc2:#98C7E8;--accent:#2F668E;--blob1:#C9E3F5;--blob2:#A9D2EE;--h1:#DCEEFB;--h2:#7FBBE6;--h3:#3C86BC;--bg:linear-gradient(180deg,#F5FAFE 0%,#E9F2FA 60%,#DFEBF6 100%)}
-body[data-sec="calendar"]{--s1:245,222,170;--s2:232,196,120;--sc1:#F5DEA1;--sc2:#E8C478;--accent:#96721E;--blob1:#F7E4B4;--blob2:#EFD196;--h1:#FBF0D6;--h2:#E7BE71;--h3:#B98A2E;--bg:linear-gradient(180deg,#FEFAF1 0%,#FBF2DE 60%,#F7E9CB 100%)}
+body[data-sec="calendar"]{--s1:190,232,214;--s2:140,210,182;--sc1:#C4EAD7;--sc2:#8FD0B3;--accent:#2B7358;--blob1:#C9EDDA;--blob2:#A9E0C6;--h1:#D9F6E8;--h2:#6FCBA0;--h3:#2E9C71;--bg:linear-gradient(180deg,#F5FBF8 0%,#E9F6EF 60%,#DFF0E7 100%)}
 html[data-theme="dark"] body[data-sec]{--bg:linear-gradient(160deg,#261D26 0%,#2C2129 50%,#221A23 100%)}
 html[data-theme="dark"] body[data-sec="tasks"]{--accent:#F6BE9A;--bg:linear-gradient(160deg,#2A201C 0%,#2F231F 50%,#241B19 100%)}
 html[data-theme="dark"] body[data-sec="scripts"]{--accent:#F4A9C4;--bg:linear-gradient(160deg,#2A1E27 0%,#302230 50%,#241A26 100%)}
 html[data-theme="dark"] body[data-sec="deals"]{--accent:#CDBDF7;--bg:linear-gradient(160deg,#231E2F 0%,#292235 50%,#1F1A2B 100%)}
 html[data-theme="dark"] body[data-sec="payments"]{--accent:#9FDDC0;--bg:linear-gradient(160deg,#1E2925 0%,#232E2A 50%,#1B2421 100%)}
 html[data-theme="dark"] body[data-sec="resources"]{--accent:#A8D3F0;--bg:linear-gradient(160deg,#1E2530 0%,#232A36 50%,#1B212B 100%)}
-html[data-theme="dark"] body[data-sec="calendar"]{--accent:#EAC878;--bg:linear-gradient(160deg,#2A2418 0%,#2F281C 50%,#241F15 100%)}
+html[data-theme="dark"] body[data-sec="calendar"]{--accent:#9FDDC0;--bg:linear-gradient(160deg,#1E2925 0%,#232E2A 50%,#1B2421 100%)}
 html body.script-editing[data-sec]{--accent:#A33A67}
 
 /* type: italic serif headings like his, sans for everything else */
@@ -2606,12 +2607,8 @@ function calDelItem(id){S.calendarItems=S.calendarItems.filter(function(x){retur
 function calDaysInMonth(y,m){return new Date(y,m+1,0).getDate();}
 function calFirstDow(y,m){return (new Date(y,m,1).getDay()+6)%7;} // 0=Mon, matches PLAN_DAYS order
 function calWeekday(y,m,d){return PLAN_DAYS[(new Date(y,m,d).getDay()+6)%7];}
-function calDealsForDate(dateStr,dnum){
-  return S.deals.filter(function(d){
-    if(!d.start)return false;
-    var p=d.start.split("-");if(p.length!==3)return false;
-    return parseInt(p[2],10)===dnum && dateStr>=d.start;
-  });
+function calPaymentsForDate(dateStr){
+  return S.payments.filter(function(p){return p.date===dateStr;});
 }
 function calItemsForDate(dateStr){
   var p=dateStr.split("-"),y=+p[0],m=+p[1]-1,d=+p[2];
@@ -2619,15 +2616,16 @@ function calItemsForDate(dateStr){
   return {
     personal:S.calendarItems.filter(function(x){return x.date===dateStr;}),
     batch:allBatchItems().filter(function(x){return x.day===wd;}),
-    deals:calDealsForDate(dateStr,d)
+    payments:calPaymentsForDate(dateStr)
   };
 }
+function calCount(info){return info.personal.length+info.batch.length+info.payments.length;}
 function calHeader(){
   var right=h("div",{class:"top-right"});
   right.appendChild(menuBtn());
   return h("header",{},[chandelier(),buildTabs(),
     h("div",{class:"top"},[h("div",{class:"title-wrap",html:'<span style="font-size:18px">📅</span><h1>calendar</h1>'}),right]),
-    h("p",{class:"date"},["plan tasks, batching & deal deadlines by date"])]);
+    h("p",{class:"date"},["plan tasks, batching & payment due dates by date"])]);
 }
 function renderCalendar(){
   var app=document.getElementById("app");app.innerHTML="";
@@ -2648,29 +2646,31 @@ function renderCalendar(){
   for(var d=1;d<=numDays;d++){
     var dateStr=y+"-"+pad2(m+1)+"-"+pad2(d);
     var info=calItemsForDate(dateStr);
+    var cnt=calCount(info);
     var cell=h("div",{class:"cal-cell"+(dateStr===todayStr?" is-today":"")+(dateStr===calSel?" is-sel":""),onclick:(function(ds){return function(){calSel=ds;render();};})(dateStr)},[
       h("div",{class:"cal-daynum"},[String(d)])
     ]);
-    if(info.deals.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-deal"}));
+    if(cnt)cell.appendChild(h("div",{class:"cal-count"},[String(cnt)]));
+    if(info.payments.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-payment"}));
     if(info.batch.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-batch"}));
     if(info.personal.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-personal"}));
     grid.appendChild(cell);
   }
   app.appendChild(grid);
 
-  var sel=calItemsForDate(calSel),selLabel=fmtDate(calSel);
+  var sel=calItemsForDate(calSel),selLabel=fmtDate(calSel),selCount=calCount(sel);
   var panel=h("div",{class:"glass card cal-day-panel",style:"margin-top:14px"});
-  panel.appendChild(h("div",{class:"t",style:"margin-bottom:8px"},[selLabel+(calSel===todayStr?" · today":"")]));
-  if(sel.deals.length){
-    panel.appendChild(h("div",{class:"cal-section-lab"},["💜 deal payments"]));
-    sel.deals.forEach(function(dl){panel.appendChild(h("div",{class:"cal-row"},[(dl.brand||"Untitled brand")+" ",h("span",{class:"cal-row-sub"},[dl.perCycle||""])]));});
+  panel.appendChild(h("div",{class:"t",style:"margin-bottom:8px"},[selLabel+(calSel===todayStr?" · today":"")+(selCount?" · "+selCount+(selCount===1?" item":" items"):"")]));
+  if(sel.payments.length){
+    panel.appendChild(h("div",{class:"cal-section-lab"},["💰 payments due"]));
+    sel.payments.forEach(function(pm){panel.appendChild(h("div",{class:"cal-row"},[(pm.brand||"Untitled brand")+" ",h("span",{class:"cal-row-sub"},[(pm.amount||"")+(pm.status?" · "+pm.status:"")])]));});
   }
   if(sel.batch.length){
     panel.appendChild(h("div",{class:"cal-section-lab"},["🎥 batching"]));
     sel.batch.forEach(function(it){panel.appendChild(h("div",{class:"cal-row"+(it.done?" done":"")},[it.title||"Untitled"]));});
   }
   panel.appendChild(h("div",{class:"cal-section-lab"},["💗 planned"]));
-  if(!sel.personal.length&&!sel.deals.length&&!sel.batch.length){
+  if(!sel.personal.length&&!sel.payments.length&&!sel.batch.length){
     panel.appendChild(h("p",{class:"empty",style:"padding:2px 4px 8px"},["Nothing planned for this day yet."]));
   }
   sel.personal.forEach(function(it){
@@ -2683,7 +2683,7 @@ function renderCalendar(){
   var ti=h("input",{class:"txt-in",placeholder:"plan something for "+selLabel+"…",onkeydown:function(e){if(e.key==="Enter"){calAddItem(calSel,ti.value);ti.value="";}}});
   panel.appendChild(h("div",{class:"add-row"},[ti,h("button",{class:"add-btn",onclick:function(){calAddItem(calSel,ti.value);ti.value="";}},["+"])]));
   app.appendChild(panel);
-  app.appendChild(h("p",{class:"foot"},["tap a day to plan something · deal payments and batching days show up automatically"]));
+  app.appendChild(h("p",{class:"foot"},["tap a day to plan something · payments due and batching days show up automatically"]));
 }
 
 // ── notes: separate note pages + quick links ──
