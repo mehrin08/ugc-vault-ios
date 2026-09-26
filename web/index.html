@@ -315,6 +315,30 @@ body.script-editing .script-body,body.script-editing .notes-area{background:#fff
 .search-wrap svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .search-in{width:100%;height:50px;padding:0 16px 0 44px;border-radius:16px;font-family:Inter;font-size:12.2px;color:var(--ink);background:var(--field);border:1px solid var(--glass-bd);outline:none}
 .search-in::placeholder{color:var(--faint)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:8px}
+.cal-nav-btn{width:36px;height:36px;border-radius:12px;font-size:16px;line-height:1;flex-shrink:0}
+.cal-nav-label{font-family:DM Sans,Outfit;font-weight:600;font-size:14.5px;color:var(--ink)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+.cal-dow{text-align:center;font-family:DM Sans,Outfit;font-size:9.8px;font-weight:600;color:var(--muted);letter-spacing:.3px;padding-bottom:2px}
+.cal-cell{aspect-ratio:1;border-radius:13px;border:1px solid var(--glass-bd);background:var(--glass-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative}
+.cal-cell.empty{border:none;background:transparent;cursor:default}
+.cal-cell.is-today{border-color:var(--accent)}
+.cal-cell.is-sel{background:linear-gradient(165deg,rgba(var(--s1),.55),rgba(255,255,255,.7))}
+html[data-theme="dark"] .cal-cell.is-sel{background:rgba(var(--s2),.22)}
+.cal-daynum{font-family:DM Sans,Outfit;font-weight:600;font-size:12.5px;color:var(--ink)}
+.cal-dot{width:5px;height:5px;border-radius:50%;position:absolute;bottom:6px}
+.cal-dot-deal{background:#7050C8;left:calc(50% - 8px)}
+.cal-dot-batch{background:#D9683C;left:calc(50% - 1px)}
+.cal-dot-personal{background:#CE4E9C;left:calc(50% + 6px)}
+.cal-day-panel .t{font-family:DM Sans,Outfit;font-weight:600;font-size:14px;color:var(--ink)}
+.cal-section-lab{font-family:DM Sans,Outfit;font-weight:600;font-size:10.5px;color:var(--muted);letter-spacing:.3px;margin:10px 0 4px;text-transform:uppercase}
+.cal-row{font-family:Inter;font-size:12.6px;color:var(--ink);padding:6px 2px;display:flex;align-items:center;gap:8px}
+.cal-row.done{color:var(--muted);text-decoration:line-through}
+.cal-row-sub{color:var(--muted);font-size:11px}
+.cal-row-title{flex:1}
+.cal-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--glass-bd);background:var(--glass-bg);flex-shrink:0;font-size:12px;color:#fff}
+.cal-check.on{background:var(--accent);border-color:var(--accent)}
+.cal-del{width:22px;height:22px;flex-shrink:0;color:var(--faint);font-size:16px;line-height:1}
 .deal-sum{display:flex;justify-content:space-between;text-align:center;gap:8px}
 .deal-sum .sv{font-family:DM Sans,Outfit;font-weight:600;font-size:15.3px;color:var(--ink)}
 .deal-sum .sl{font-family:DM Sans,Outfit;font-size:9.9px;color:var(--muted);margin-top:2px;letter-spacing:.3px}
@@ -374,12 +398,14 @@ body[data-sec="scripts"]{--s1:246,190,208;--s2:232,150,182;--sc1:#F6C1D3;--sc2:#
 body[data-sec="deals"]{--s1:215,201,245;--s2:180,160,232;--sc1:#DACDF5;--sc2:#B7A3EA;--accent:#5B449E;--blob1:#DCD0F7;--blob2:#C7B5EF;--h1:#E9E0FF;--h2:#A98AF0;--h3:#7050C8;--bg:linear-gradient(180deg,#FAF7FE 0%,#F0EAFA 60%,#E8E0F6 100%)}
 body[data-sec="payments"]{--s1:190,232,214;--s2:140,210,182;--sc1:#C4EAD7;--sc2:#8FD0B3;--accent:#2B7358;--blob1:#C9EDDA;--blob2:#A9E0C6;--h1:#D9F6E8;--h2:#6FCBA0;--h3:#2E9C71;--bg:linear-gradient(180deg,#F5FBF8 0%,#E9F6EF 60%,#DFF0E7 100%)}
 body[data-sec="resources"]{--s1:190,222,242;--s2:150,196,232;--sc1:#C5E1F4;--sc2:#98C7E8;--accent:#2F668E;--blob1:#C9E3F5;--blob2:#A9D2EE;--h1:#DCEEFB;--h2:#7FBBE6;--h3:#3C86BC;--bg:linear-gradient(180deg,#F5FAFE 0%,#E9F2FA 60%,#DFEBF6 100%)}
+body[data-sec="calendar"]{--s1:245,222,170;--s2:232,196,120;--sc1:#F5DEA1;--sc2:#E8C478;--accent:#96721E;--blob1:#F7E4B4;--blob2:#EFD196;--h1:#FBF0D6;--h2:#E7BE71;--h3:#B98A2E;--bg:linear-gradient(180deg,#FEFAF1 0%,#FBF2DE 60%,#F7E9CB 100%)}
 html[data-theme="dark"] body[data-sec]{--bg:linear-gradient(160deg,#261D26 0%,#2C2129 50%,#221A23 100%)}
 html[data-theme="dark"] body[data-sec="tasks"]{--accent:#F6BE9A;--bg:linear-gradient(160deg,#2A201C 0%,#2F231F 50%,#241B19 100%)}
 html[data-theme="dark"] body[data-sec="scripts"]{--accent:#F4A9C4;--bg:linear-gradient(160deg,#2A1E27 0%,#302230 50%,#241A26 100%)}
 html[data-theme="dark"] body[data-sec="deals"]{--accent:#CDBDF7;--bg:linear-gradient(160deg,#231E2F 0%,#292235 50%,#1F1A2B 100%)}
 html[data-theme="dark"] body[data-sec="payments"]{--accent:#9FDDC0;--bg:linear-gradient(160deg,#1E2925 0%,#232E2A 50%,#1B2421 100%)}
 html[data-theme="dark"] body[data-sec="resources"]{--accent:#A8D3F0;--bg:linear-gradient(160deg,#1E2530 0%,#232A36 50%,#1B212B 100%)}
+html[data-theme="dark"] body[data-sec="calendar"]{--accent:#EAC878;--bg:linear-gradient(160deg,#2A2418 0%,#2F281C 50%,#241F15 100%)}
 html body.script-editing[data-sec]{--accent:#A33A67}
 
 /* type: italic serif headings like his, sans for everything else */
@@ -745,7 +771,7 @@ function seed(){return [
 // ── state ──
 var KEY="checklist:v1";
 var mem=null; // in-memory fallback
-var S={lists:[],streak:0,lastComplete:"",win:{start:"08:00",end:"22:00"},mode:"light",focus:[],brands:[],tab:"tasks",taskView:"daily",sound:true,sfxVolume:100,deals:[],payments:[],batches:[],batchPlan:[],batchTarget:0,monthlyGoal:0,resources:{notes:"",links:[]}};
+var S={lists:[],streak:0,lastComplete:"",win:{start:"08:00",end:"22:00"},mode:"light",focus:[],brands:[],tab:"tasks",taskView:"daily",sound:true,sfxVolume:100,deals:[],payments:[],batches:[],batchPlan:[],batchTarget:0,monthlyGoal:0,resources:{notes:"",links:[]},calendarItems:[]};
 var scr={brand:null,script:null};
 var actx=null;
 var prevAllDone=null;
@@ -778,13 +804,15 @@ function applyBlob(p){
   S.batchPlan=migratePlan(rawPlan);
   S.batches=[];
   S.resources=normResources(p&&p.resources);
+  S.calendarItems=((p&&p.calendarItems)?p.calendarItems:[]).map(normCalendarItem);
   S.sound=!(p&&p.sound===false);
   S.sfxVolume=(p&&typeof p.sfxVolume==="number")?p.sfxVolume:100;
   S.musicOn=!(p&&p.musicOn===false);
   S.volume=(p&&typeof p.volume==="number")?p.volume:70;
   document.documentElement.setAttribute("data-theme",S.mode);
 }
-function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume};}
+function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,calendarItems:S.calendarItems};}
+function normCalendarItem(x){x=x||{};return {id:x.id||uid(),date:/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:today(),title:x.title||"",done:!!x.done};}
 function normResources(r){r=r||{};
   var pages=Array.isArray(r.pages)?r.pages.map(function(p){return {id:p.id||uid(),title:p.title||"",body:p.body||"",updated:p.updated||""};})
     :(r.notes&&r.notes.trim()?[{id:uid(),title:"Tips & tricks",body:r.notes,updated:new Date().toISOString()}]:[]); // older versions had one big notes box
@@ -1693,10 +1721,10 @@ function renderHome(){
     h("span",{class:"tt-count"},[doneT+" of "+totT+" done"])
   ]));
 }
-function render(){ document.body.setAttribute("data-sec",({home:1,tasks:1,scripts:1,deals:1,payments:1,resources:1})[S.tab]?S.tab:"tasks"); document.body.classList.toggle("script-editing", S.tab==="scripts"&&!!scr.script); if(S.tab==="home")renderHome(); else if(S.tab==="scripts")renderScripts(); else if(S.tab==="deals")renderDeals(); else if(S.tab==="payments")renderPayments(); else if(S.tab==="resources")renderResources(); else renderTasks(); }
+function render(){ document.body.setAttribute("data-sec",({home:1,tasks:1,scripts:1,deals:1,payments:1,calendar:1,resources:1})[S.tab]?S.tab:"tasks"); document.body.classList.toggle("script-editing", S.tab==="scripts"&&!!scr.script); if(S.tab==="home")renderHome(); else if(S.tab==="scripts")renderScripts(); else if(S.tab==="deals")renderDeals(); else if(S.tab==="payments")renderPayments(); else if(S.tab==="calendar")renderCalendar(); else if(S.tab==="resources")renderResources(); else renderTasks(); }
 function buildTabs(){
   function mk(id,label){var b=h("button",{class:"tab t-"+id+(S.tab===id?" on":""),onclick:function(){if(S.tab!==id){S.tab=id;save();render();}}});b.innerHTML=label;return b;}
-  var pills=h("div",{class:"tabs"},[mk("home","\u2302 home"),mk("tasks","\u2713 tasks"),mk("scripts",heart(12)+" scripts"),mk("deals",crystal(12)+" deals"),mk("payments","\uD83D\uDCB0 pay"),mk("resources","\uD83D\uDDC2\uFE0F notes")]);
+  var pills=h("div",{class:"tabs"},[mk("home","\u2302 home"),mk("tasks","\u2713 tasks"),mk("scripts",heart(12)+" scripts"),mk("deals",crystal(12)+" deals"),mk("payments","\uD83D\uDCB0 pay"),mk("calendar","\uD83D\uDCC5 calendar"),mk("resources","\uD83D\uDDC2\uFE0F notes")]);
   enableDragScroll(pills);
   return h("div",{},[
     h("div",{class:"wordmark-row"},[
@@ -2567,6 +2595,95 @@ function renderBatches(){
   var nb=h("input",{class:"txt-in",style:"background:transparent;border:none",placeholder:"new brand / client",onkeydown:function(e){if(e.key==="Enter"){addBrandGroup(nb.value);}}});
   app.appendChild(h("div",{class:"glass newlist"},[nb,h("button",{class:"add-btn",style:"width:104px;font-size:13px;font-family:DM Sans,Outfit;font-weight:500",onclick:function(){addBrandGroup(nb.value);}},["+ brand"])]));
   app.appendChild(h("p",{class:"foot"},["a weekly plan — your checks stay until you tap reset week · tap a day to schedule an item · press & hold to reorder"]));
+}
+
+// ── calendar: plan tasks, batching & deal deadlines by date ──
+var calNav=(function(){var d=new Date();return {y:d.getFullYear(),m:d.getMonth()};})();
+var calSel=today();
+function calAddItem(dateStr,t){t=(t||"").trim();if(!t)return;S.calendarItems.push(normCalendarItem({date:dateStr,title:t}));save();render();}
+function calToggleItem(id){var it=S.calendarItems.find(function(x){return x.id===id;});if(it){it.done=!it.done;save();render();}}
+function calDelItem(id){S.calendarItems=S.calendarItems.filter(function(x){return x.id!==id;});save();render();}
+function calDaysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function calFirstDow(y,m){return (new Date(y,m,1).getDay()+6)%7;} // 0=Mon, matches PLAN_DAYS order
+function calWeekday(y,m,d){return PLAN_DAYS[(new Date(y,m,d).getDay()+6)%7];}
+function calDealsForDate(dateStr,dnum){
+  return S.deals.filter(function(d){
+    if(!d.start)return false;
+    var p=d.start.split("-");if(p.length!==3)return false;
+    return parseInt(p[2],10)===dnum && dateStr>=d.start;
+  });
+}
+function calItemsForDate(dateStr){
+  var p=dateStr.split("-"),y=+p[0],m=+p[1]-1,d=+p[2];
+  var wd=calWeekday(y,m,d);
+  return {
+    personal:S.calendarItems.filter(function(x){return x.date===dateStr;}),
+    batch:allBatchItems().filter(function(x){return x.day===wd;}),
+    deals:calDealsForDate(dateStr,d)
+  };
+}
+function calHeader(){
+  var right=h("div",{class:"top-right"});
+  right.appendChild(menuBtn());
+  return h("header",{},[chandelier(),buildTabs(),
+    h("div",{class:"top"},[h("div",{class:"title-wrap",html:'<span style="font-size:18px">📅</span><h1>calendar</h1>'}),right]),
+    h("p",{class:"date"},["plan tasks, batching & deal deadlines by date"])]);
+}
+function renderCalendar(){
+  var app=document.getElementById("app");app.innerHTML="";
+  app.appendChild(calHeader());
+
+  var y=calNav.y,m=calNav.m;
+  var monthLabel=new Date(y,m,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});
+  app.appendChild(h("div",{class:"glass card cal-nav"},[
+    h("button",{class:"soft-btn cal-nav-btn",onclick:function(){calNav.m--;if(calNav.m<0){calNav.m=11;calNav.y--;}render();}},["‹"]),
+    h("div",{class:"cal-nav-label"},[monthLabel]),
+    h("button",{class:"soft-btn cal-nav-btn",onclick:function(){calNav.m++;if(calNav.m>11){calNav.m=0;calNav.y++;}render();}},["›"])
+  ]));
+
+  var grid=h("div",{class:"cal-grid"});
+  PLAN_DAYS.forEach(function(d){grid.appendChild(h("div",{class:"cal-dow"},[d.slice(0,2)]));});
+  var firstDow=calFirstDow(y,m),numDays=calDaysInMonth(y,m),todayStr=today();
+  for(var i=0;i<firstDow;i++)grid.appendChild(h("div",{class:"cal-cell empty"}));
+  for(var d=1;d<=numDays;d++){
+    var dateStr=y+"-"+pad2(m+1)+"-"+pad2(d);
+    var info=calItemsForDate(dateStr);
+    var cell=h("div",{class:"cal-cell"+(dateStr===todayStr?" is-today":"")+(dateStr===calSel?" is-sel":""),onclick:(function(ds){return function(){calSel=ds;render();};})(dateStr)},[
+      h("div",{class:"cal-daynum"},[String(d)])
+    ]);
+    if(info.deals.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-deal"}));
+    if(info.batch.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-batch"}));
+    if(info.personal.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-personal"}));
+    grid.appendChild(cell);
+  }
+  app.appendChild(grid);
+
+  var sel=calItemsForDate(calSel),selLabel=fmtDate(calSel);
+  var panel=h("div",{class:"glass card cal-day-panel",style:"margin-top:14px"});
+  panel.appendChild(h("div",{class:"t",style:"margin-bottom:8px"},[selLabel+(calSel===todayStr?" · today":"")]));
+  if(sel.deals.length){
+    panel.appendChild(h("div",{class:"cal-section-lab"},["💜 deal payments"]));
+    sel.deals.forEach(function(dl){panel.appendChild(h("div",{class:"cal-row"},[(dl.brand||"Untitled brand")+" ",h("span",{class:"cal-row-sub"},[dl.perCycle||""])]));});
+  }
+  if(sel.batch.length){
+    panel.appendChild(h("div",{class:"cal-section-lab"},["🎥 batching"]));
+    sel.batch.forEach(function(it){panel.appendChild(h("div",{class:"cal-row"+(it.done?" done":"")},[it.title||"Untitled"]));});
+  }
+  panel.appendChild(h("div",{class:"cal-section-lab"},["💗 planned"]));
+  if(!sel.personal.length&&!sel.deals.length&&!sel.batch.length){
+    panel.appendChild(h("p",{class:"empty",style:"padding:2px 4px 8px"},["Nothing planned for this day yet."]));
+  }
+  sel.personal.forEach(function(it){
+    var row=h("div",{class:"cal-row cal-row-check"+(it.done?" done":"")});
+    row.appendChild(h("button",{class:"cal-check"+(it.done?" on":""),onclick:function(){calToggleItem(it.id);}},[it.done?"✓":""]));
+    row.appendChild(h("div",{class:"cal-row-title"},[it.title]));
+    row.appendChild(h("button",{class:"cal-del",onclick:function(){calDelItem(it.id);}},["×"]));
+    panel.appendChild(row);
+  });
+  var ti=h("input",{class:"txt-in",placeholder:"plan something for "+selLabel+"…",onkeydown:function(e){if(e.key==="Enter"){calAddItem(calSel,ti.value);ti.value="";}}});
+  panel.appendChild(h("div",{class:"add-row"},[ti,h("button",{class:"add-btn",onclick:function(){calAddItem(calSel,ti.value);ti.value="";}},["+"])]));
+  app.appendChild(panel);
+  app.appendChild(h("p",{class:"foot"},["tap a day to plan something · deal payments and batching days show up automatically"]));
 }
 
 // ── notes: separate note pages + quick links ──
