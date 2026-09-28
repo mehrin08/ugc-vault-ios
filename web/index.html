@@ -962,6 +962,45 @@ function enableDrag(handle,container,onCommit,dragEl){
   });
 }
 
+// ── swipe-left-to-delete, for any row (tasks, brands, deals, payments, notes…) ──
+// confirmMsg: if set, asks first (springs back on "keep it"); omit for quick, low-stakes deletes.
+function swipeToDelete(el,onDelete,confirmMsg){
+  var THRESH=90,startX=0,startY=0,dx=0,dragging=false,axis=null,pid=null,w=300;
+  el.style.touchAction="pan-y";
+  function reset(){el.style.transition="";el.style.transform="";el.style.opacity="";}
+  el.addEventListener("pointerdown",function(e){
+    if(e.target.closest("button,input,a,select,textarea"))return;
+    startX=e.clientX;startY=e.clientY;dx=0;dragging=true;axis=null;pid=e.pointerId;w=el.getBoundingClientRect().width||300;
+  });
+  el.addEventListener("pointermove",function(e){
+    if(!dragging)return;
+    var mx=e.clientX-startX,my=e.clientY-startY;
+    if(axis===null){
+      if(Math.abs(mx)<8&&Math.abs(my)<8)return;
+      axis=Math.abs(mx)>Math.abs(my)*1.2?"x":"y";
+      if(axis==="x"){try{el.setPointerCapture(pid);}catch(err){}}
+    }
+    if(axis!=="x")return;
+    dx=Math.min(0,mx);
+    el.style.transition="none";
+    el.style.transform="translateX("+dx+"px)";
+    el.style.opacity=String(Math.max(.3,1+dx/w));
+  });
+  function end(){
+    if(!dragging)return;dragging=false;
+    if(axis==="x"){
+      el.style.transition="";
+      if(dx<-THRESH){
+        var go=function(){el.style.transform="translateX(-100%)";el.style.opacity="0";setTimeout(onDelete,160);};
+        if(confirmMsg)confirmModal(confirmMsg,go,reset);else go();
+      }else reset();
+    }
+    axis=null;
+  }
+  el.addEventListener("pointerup",end);
+  el.addEventListener("pointercancel",end);
+}
+
 // ── drag-to-scroll fallback for horizontally scrolling rows (e.g. tab bar) ──
 function enableDragScroll(el){
   var startX=0,startY=0,startScroll=0,dragging=false,locked=null,pid=null,moved=false;
@@ -1082,7 +1121,7 @@ function renderTasks(){
   if(!UI.tipTasks&&S.lists.length){
     app.appendChild(h("div",{class:"glass tip"},[
       h("span",{html:heart(15)}),
-      h("span",{class:"tip-t"},["Tap a list to open or close it. Tap ⋯ for reminders, counts and more."]),
+      h("span",{class:"tip-t"},["Tap a list to open or close it. Tap ⋯ for reminders, counts and more. Swipe left on a task to delete it."]),
       h("button",{class:"ghost","aria-label":"got it",onclick:function(){uiSet("tipTasks",1);render();}},["×"])
     ]));
   }
@@ -1163,17 +1202,20 @@ function renderTasks(){
       var sw=h("div",{class:"subs"});
       items.forEach(function(it){
         var t2=h("span",{class:"sub-t"+(it.done?" done":""),title:"tap to rename",onclick:function(){startRename(t2,it.title,true,function(v){renameItem(s.id,it.id,v);});}},[it.title]);
-        sw.appendChild(h("div",{class:"sub-row"},[
+        var subRow=h("div",{class:"sub-row"},[
           h("button",{class:"check sm"+(it.done?" on":""),"aria-label":"toggle subtask",onclick:function(){toggleItem(s.id,it.id);}}),
           t2,
           h("button",{class:"ghost","aria-label":"delete subtask",onclick:function(){delItem(s.id,it.id);}},["×"])
-        ]));
+        ]);
+        swipeToDelete(subRow,function(){delItem(s.id,it.id);});
+        sw.appendChild(subRow);
       });
       var si=h("input",{class:"txt-in sub-in",placeholder:"add a subtask…","data-subin":s.id,onkeydown:function(e){if(e.key==="Enter"){addItem(s.id,si.value);var el=document.querySelector('[data-subin="'+s.id+'"]');if(el)el.focus();}}});
       sw.appendChild(h("div",{class:"sub-add"},[si,h("button",{class:"add-btn sm","aria-label":"add subtask",onclick:function(){addItem(s.id,si.value);}},["+"])]));
       row._subs=sw;
     }
     enableDrag(row,tasks,function(order){l.subs.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(row,function(){delSub(l.id,s.id);});
     return row;
   }
 
@@ -1788,7 +1830,9 @@ function renderBrandList(app){
       if(!matches.length){results.appendChild(h("p",{class:"empty"},['no scripts match \u201c'+q+'\u201d.']));return;}
       matches.forEach(function(m){var row=h("div",{class:"glass script-row",onclick:function(){scr.brand=m.b.id;scr.script=m.s.id;render();}});
         row.appendChild(h("div",{},[h("div",{class:"st"},[m.s.title||"Untitled script"]),h("div",{class:"stat-line",style:"margin-top:3px"},[m.b.name])]));
-        row.appendChild(h("div",{class:"wc"},[wordCount(m.s.body)+" w"]));results.appendChild(row);});
+        row.appendChild(h("div",{class:"wc"},[wordCount(m.s.body)+" w"]));
+        swipeToDelete(row,function(){delScript(m.b.id,m.s.id);},"Delete this script?");
+        results.appendChild(row);});
       return;
     }
     results.appendChild(h("div",{class:"sec-title",style:"margin:4px 2px 12px"},["your brands"]));
@@ -1797,6 +1841,7 @@ function renderBrandList(app){
       var card=h("div",{class:"glass brand-card lt-"+(bi%5),onclick:function(){scr.brand=b.id;render();}});
       card.appendChild(h("div",{class:"nm"},[h("span",{class:"bar"}),b.name]));
       card.appendChild(h("div",{class:"cnt"},[String(b.scripts.length)]));
+      swipeToDelete(card,function(){delBrand(b.id);},"Delete \u201c"+b.name+"\u201d? This removes its scripts, links and notes.");
       results.appendChild(card);
     });
     results.appendChild(h("button",{class:"newbrand",onclick:newBrandModal},["+ new brand"]));
@@ -1826,6 +1871,7 @@ function renderBrandDetail(app){
     if(tags.length)info.appendChild(h("div",{class:"stat-line",style:"margin-top:2px;font-size:9.5px"},[tags.join(" \u00b7 ")]));
     row.appendChild(grip);row.appendChild(info);row.appendChild(h("div",{class:"wc"},[wordCount(x.body)+" w"]));
     enableDrag(row,scriptsWrap,function(order){b.scripts.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(row,function(){delScript(b.id,x.id);},"Delete this script?");
     scriptsWrap.appendChild(row);});
   scBody.appendChild(scriptsWrap);
   var lnBody=foldSection(app,"b-links","reference links",b.links.length,function(){addLinkModal(b.id);},"+ add link",false);
@@ -1836,6 +1882,7 @@ function renderBrandDetail(app){
     row.appendChild(h("a",{href:l.url,target:"_blank",rel:"noopener",style:"flex:1"},[l.label||l.url]));
     row.appendChild(h("button",{class:"ghost","aria-label":"remove link",onclick:function(){delLink(b.id,l.id);}},["\u00d7"]));
     enableDrag(row,linksWrap,function(order){b.links.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(row,function(){delLink(b.id,l.id);});
     linksWrap.appendChild(row);});
   lnBody.appendChild(linksWrap);
   var hkBody=foldSection(app,"b-hooks","hooks",(b.hooks||[]).length,function(){addHookModal(b.id);},"+ add hook",false);
@@ -2085,13 +2132,13 @@ function addScriptRefModal(bid,sid,existing){
   ]);
   ov.appendChild(card);document.body.appendChild(ov);label.focus();
 }
-function confirmModal(text,onYes){
-  var ov=h("div",{class:"overlay"});function close(){ov.remove();}
-  ov.addEventListener("click",function(e){if(e.target===ov)close();});
+function confirmModal(text,onYes,onCancel){
+  var ov=h("div",{class:"overlay"});function cancelClose(){ov.remove();if(onCancel)onCancel();}
+  ov.addEventListener("click",function(e){if(e.target===ov)cancelClose();});
   var card=h("div",{class:"glass editor"},[
     h("div",{class:"ed-hd",html:heart(18)+' <span class="t">Delete?</span>'}),
     h("p",{class:"ed-sub",style:"line-height:1.5;margin-bottom:6px"},[text]),
-    h("div",{class:"ed-btns"},[h("button",{class:"soft-btn",onclick:close},["keep it"]),h("button",{class:"solid-btn",style:"background:linear-gradient(135deg,#F3A0C4,#C77CD6)",onclick:function(){close();onYes();}},["delete"])])
+    h("div",{class:"ed-btns"},[h("button",{class:"soft-btn",onclick:cancelClose},["keep it"]),h("button",{class:"solid-btn",style:"background:linear-gradient(135deg,#F3A0C4,#C77CD6)",onclick:function(){ov.remove();onYes();}},["delete"])])
   ]);
   ov.appendChild(card);document.body.appendChild(ov);
 }
@@ -2312,6 +2359,7 @@ function renderPayments(){
     var when=[]; if(x.month)when.push(fmtMonth(x.month)); if(x.date)when.push(fmtDate(x.date));
     if(when.length)card.appendChild(h("div",{class:"deal-line"},["\uD83D\uDCC5 "+when.join(" \u00b7 ")]));
     if(x.notes)card.appendChild(h("div",{class:"deal-line"},["\uD83D\uDCDD "+x.notes]));
+    swipeToDelete(card,function(){delPayment(x.id);},"Delete this payment?");
     app.appendChild(card);
   });
   app.appendChild(h("button",{class:"newbrand",style:"margin-top:6px",onclick:newPayment},["+ new payment"]));
@@ -2392,6 +2440,7 @@ function renderDeals(){
     var handles=(d.platforms?d.platforms.split(",").map(function(x){return x.trim();}).filter(Boolean):[]).map(function(pn){var ac=d.accounts&&d.accounts[pn];var u=ac&&ac.user?ac.user.trim():"";return u?pn+" "+(u.charAt(0)==="@"?u:"@"+u):pn;});
     if(handles.length)meta.push(handles.join(", "));if(d.bonus)meta.push("\u2726 "+d.bonus);if(d.start)meta.push("from "+fmtDate(d.start));
     if(meta.length)card.appendChild(h("div",{class:"deal-line deal-meta1"},[meta.join(" \u00b7 ")]));
+    swipeToDelete(card,function(){delDeal(d.id);},"Delete this deal?");
     app.appendChild(card);
   });
   app.appendChild(h("button",{class:"newbrand",style:"margin-top:6px",onclick:newDeal},["+ new deal"]));
@@ -2582,6 +2631,7 @@ function renderBatches(){
       var del=h("button",{class:"ghost","aria-label":"delete",onclick:function(){delBatchItem(it.id);}},["×"]);
       [chk,txt,dayChip,del].forEach(function(x){row.appendChild(x);});
       enableDrag(row,tasks,function(order){g.items.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+      swipeToDelete(row,function(){delBatchItem(it.id);});
       tasks.appendChild(row);
     });
     section.appendChild(tasks);
@@ -2596,7 +2646,7 @@ function renderBatches(){
   }
   var nb=h("input",{class:"txt-in",style:"background:transparent;border:none",placeholder:"new brand / client",onkeydown:function(e){if(e.key==="Enter"){addBrandGroup(nb.value);}}});
   app.appendChild(h("div",{class:"glass newlist"},[nb,h("button",{class:"add-btn",style:"width:104px;font-size:13px;font-family:DM Sans,Outfit;font-weight:500",onclick:function(){addBrandGroup(nb.value);}},["+ brand"])]));
-  app.appendChild(h("p",{class:"foot"},["a weekly plan — your checks stay until you tap reset week · tap a day to schedule an item · press & hold to reorder"]));
+  app.appendChild(h("p",{class:"foot"},["a weekly plan — your checks stay until you tap reset week · tap a day to schedule an item · press & hold to reorder · swipe left to delete"]));
 }
 
 // ── calendar: plan tasks, batching & deal deadlines by date ──
@@ -2679,6 +2729,7 @@ function renderCalendar(){
     row.appendChild(h("button",{class:"cal-check"+(it.done?" on":""),onclick:function(){calToggleItem(it.id);}},[it.done?"✓":""]));
     row.appendChild(h("div",{class:"cal-row-title"},[it.title]));
     row.appendChild(h("button",{class:"cal-del",onclick:function(){calDelItem(it.id);}},["×"]));
+    swipeToDelete(row,function(){calDelItem(it.id);});
     panel.appendChild(row);
   });
   var ti=h("input",{class:"txt-in",placeholder:"plan something for "+selLabel+"…",onkeydown:function(e){if(e.key==="Enter"){calAddItem(calSel,ti.value);ti.value="";}}});
@@ -2723,6 +2774,7 @@ function renderResources(){
     card.appendChild(h("div",{class:"note-card-p"},[first||"Empty note"]));
     card.appendChild(h("div",{class:"note-card-d"},[noteWhen(p.updated)]));
     enableDrag(card,notesWrap,function(order){S.resources.pages.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(card,function(){delNote(p.id);},"Delete “"+(p.title.trim()||"Untitled note")+"”?");
     notesWrap.appendChild(card);
   });
   app.appendChild(notesWrap);
@@ -2742,10 +2794,11 @@ function renderResources(){
       ]);
     }},["⋯"]));
     enableDrag(row,linksWrap,function(order){S.resources.links.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(row,function(){delResourceLink(l.id);});
     linksWrap.appendChild(row);
   });
   lb.appendChild(linksWrap);
-  app.appendChild(h("p",{class:"foot"},["press & hold a note or link to reorder"]));
+  app.appendChild(h("p",{class:"foot"},["press & hold a note or link to reorder · swipe left to delete"]));
 }
 function renderNotePage(app){
   var p=curNote();
