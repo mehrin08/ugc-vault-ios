@@ -605,15 +605,29 @@ html[data-theme="dark"] .lh-count{background:rgba(255,255,255,.08)}
 <body>
 <div class="blob pink"></div><div class="blob lav"></div>
 
-<!-- Background music: music.mp3 sits next to this file and only downloads when you first press play. -->
-<audio id="bgAudio" loop preload="none" style="display:none">
-  <source src="music.mp3" type="audio/mpeg">
-</audio>
+<!-- Background music: royalty-free tracks (Pixabay Content License) that only download when you first press play. -->
+<audio id="bgAudio" loop preload="none" style="display:none"></audio>
 <script>
+var MUSIC_TRACKS = [
+  {id:0, name:"Afro Pop", file:"music1.mp3"},
+  {id:1, name:"Chill Hop", file:"music2.mp3"}
+];
 var bgAudio = document.getElementById('bgAudio');
 var musicPlaying = false;
 var musicUserPaused = false;
 var musicAutoPaused = false; // paused because tab/app lost focus, not by the user
+function currentTrack(){
+  var idx=(typeof S!=="undefined"&&typeof S.musicTrack==="number")?S.musicTrack:0;
+  return MUSIC_TRACKS[idx]||MUSIC_TRACKS[0];
+}
+function ensureMusicSrc(){
+  if(!bgAudio)return;
+  var want=currentTrack().file;
+  if(bgAudio.getAttribute('data-file')!==want){
+    bgAudio.setAttribute('data-file',want);
+    bgAudio.src=want;
+  }
+}
 function applyMusicVolume(){
   if(bgAudio) bgAudio.volume = (typeof S!=="undefined"&&typeof S.volume==="number"?S.volume:70)/100;
 }
@@ -625,6 +639,16 @@ function pauseMusicHard(){
   try{ bgAudio.pause(); }catch(e){}
   musicPlaying = false;
 }
+function setMusicTrack(idx){
+  if(typeof S==="undefined")return;
+  S.musicTrack=idx;
+  var wasPlaying=musicPlaying;
+  ensureMusicSrc();
+  if(wasPlaying){
+    applyMusicVolume();
+    try{ bgAudio.play().catch(function(){}); }catch(e){}
+  }
+}
 function toggleMusicPanel(){
   if(!bgAudio)return;
   if(musicPlaying){
@@ -632,6 +656,7 @@ function toggleMusicPanel(){
     pauseMusicHard();
   } else {
     musicUserPaused=false; musicAutoPaused=false;
+    ensureMusicSrc();
     applyMusicVolume();
     try{ bgAudio.play().catch(function(){}); }catch(e){}
   }
@@ -811,9 +836,10 @@ function applyBlob(p){
   S.sfxVolume=(p&&typeof p.sfxVolume==="number")?p.sfxVolume:100;
   S.musicOn=!(p&&p.musicOn===false);
   S.volume=(p&&typeof p.volume==="number")?p.volume:70;
+  S.musicTrack=(p&&typeof p.musicTrack==="number"&&MUSIC_TRACKS[p.musicTrack])?p.musicTrack:0;
   document.documentElement.setAttribute("data-theme",S.mode);
 }
-function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,calendarItems:S.calendarItems};}
+function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,musicTrack:S.musicTrack,calendarItems:S.calendarItems};}
 function normCalendarItem(x){x=x||{};return {id:x.id||uid(),date:/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:today(),title:x.title||"",done:!!x.done};}
 function normResources(r){r=r||{};
   var pages=Array.isArray(r.pages)?r.pages.map(function(p){return {id:p.id||uid(),title:p.title||"",body:p.body||"",updated:p.updated||""};})
@@ -2196,6 +2222,21 @@ function settingsMenu(){
     if(!S.musicOn){ musicUserPaused=true; try{pauseMusicHard();}catch(e){} } else { musicUserPaused=false; }
     save(); render(); close(); settingsMenu();
   })));
+
+  var trackWrap=h("div",{style:"padding:10px 0;border-bottom:1px solid var(--glass-bd)"});
+  trackWrap.appendChild(h("div",{style:"font-family:Inter;font-size:13.5px;color:var(--ink);margin-bottom:8px"},["music track"]));
+  var trackPicker=h("div",{style:"display:flex;gap:8px"});
+  MUSIC_TRACKS.forEach(function(t){
+    var active=(S.musicTrack||0)===t.id;
+    var btn=h("button",{style:"flex:1;padding:8px 4px;border-radius:12px;border:none;cursor:pointer;font-family:Inter;font-size:12.5px;transition:.2s;background:"+(active?"#B04FE0":"var(--glass-bd)")+";color:"+(active?"#fff":"var(--ink)")},[t.name]);
+    btn.addEventListener("click",function(){
+      if((S.musicTrack||0)===t.id)return;
+      setMusicTrack(t.id); save(); close(); settingsMenu();
+    });
+    trackPicker.appendChild(btn);
+  });
+  trackWrap.appendChild(trackPicker);
+  card.appendChild(trackWrap);
 
   var volWrap=h("div",{style:"padding:10px 0;border-bottom:1px solid var(--glass-bd)"});
   volWrap.appendChild(h("div",{style:"display:flex;justify-content:space-between;margin-bottom:6px"},[
