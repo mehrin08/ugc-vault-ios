@@ -616,6 +616,18 @@ var bgAudio = document.getElementById('bgAudio');
 var musicPlaying = false;
 var musicUserPaused = false;
 var musicAutoPaused = false; // paused because tab/app lost focus, not by the user
+// Background music is incidental to using the app, not a media player — opt this <audio>
+// element out of the Lock Screen / Control Center "Now Playing" card the browser would
+// otherwise publish automatically the moment it starts playing.
+if('mediaSession' in navigator){
+  try{
+    navigator.mediaSession.metadata=null;
+    navigator.mediaSession.playbackState='none';
+    ['play','pause','stop','seekbackward','seekforward','seekto','previoustrack','nexttrack'].forEach(function(action){
+      try{navigator.mediaSession.setActionHandler(action,null);}catch(e){}
+    });
+  }catch(e){}
+}
 function currentTrack(){
   var idx=(typeof S!=="undefined"&&typeof S.musicTrack==="number")?S.musicTrack:0;
   return MUSIC_TRACKS[idx]||MUSIC_TRACKS[0];
@@ -990,9 +1002,13 @@ function enableDrag(handle,container,onCommit,dragEl){
 
 // ── swipe-left-to-delete, for any row (tasks, brands, deals, payments, notes…) ──
 // confirmMsg: if set, asks first (springs back on "keep it"); omit for quick, low-stakes deletes.
-function swipeToDelete(el,onDelete,confirmMsg){
+// hasReorder: true for rows that also use enableDrag (long-press to reorder) — those already
+// get "touch-action:manipulation" from CSS and must keep it, or the drag loses the race against
+// native scroll on real touch hardware; everything else gets "pan-y" set here explicitly (checking
+// getComputedStyle isn't reliable here since these elements aren't attached to the DOM yet).
+function swipeToDelete(el,onDelete,confirmMsg,hasReorder){
   var THRESH=90,startX=0,startY=0,dx=0,dragging=false,axis=null,pid=null,w=300;
-  el.style.touchAction="pan-y";
+  if(!hasReorder)el.style.touchAction="pan-y";
   function reset(){el.style.transition="";el.style.transform="";el.style.opacity="";}
   el.addEventListener("pointerdown",function(e){
     if(e.target.closest("button,input,a,select,textarea"))return;
@@ -1000,6 +1016,9 @@ function swipeToDelete(el,onDelete,confirmMsg){
   });
   el.addEventListener("pointermove",function(e){
     if(!dragging)return;
+    // enableDrag's long-press-to-reorder has taken over this same element — stand down
+    // completely rather than fight it over the element's transform.
+    if(el.classList.contains("dragging")){dragging=false;axis=null;reset();return;}
     var mx=e.clientX-startX,my=e.clientY-startY;
     if(axis===null){
       if(Math.abs(mx)<8&&Math.abs(my)<8)return;
@@ -1014,6 +1033,7 @@ function swipeToDelete(el,onDelete,confirmMsg){
   });
   function end(){
     if(!dragging)return;dragging=false;
+    if(el.classList.contains("dragging")){axis=null;reset();return;}
     if(axis==="x"){
       el.style.transition="";
       if(dx<-THRESH){
@@ -1241,7 +1261,7 @@ function renderTasks(){
       row._subs=sw;
     }
     enableDrag(row,tasks,function(order){l.subs.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-    swipeToDelete(row,function(){delSub(l.id,s.id);});
+    swipeToDelete(row,function(){delSub(l.id,s.id);},null,true);
     return row;
   }
 
@@ -1897,7 +1917,7 @@ function renderBrandDetail(app){
     if(tags.length)info.appendChild(h("div",{class:"stat-line",style:"margin-top:2px;font-size:9.5px"},[tags.join(" \u00b7 ")]));
     row.appendChild(grip);row.appendChild(info);row.appendChild(h("div",{class:"wc"},[wordCount(x.body)+" w"]));
     enableDrag(row,scriptsWrap,function(order){b.scripts.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-    swipeToDelete(row,function(){delScript(b.id,x.id);},"Delete this script?");
+    swipeToDelete(row,function(){delScript(b.id,x.id);},"Delete this script?",true);
     scriptsWrap.appendChild(row);});
   scBody.appendChild(scriptsWrap);
   var lnBody=foldSection(app,"b-links","reference links",b.links.length,function(){addLinkModal(b.id);},"+ add link",false);
@@ -1908,7 +1928,7 @@ function renderBrandDetail(app){
     row.appendChild(h("a",{href:l.url,target:"_blank",rel:"noopener",style:"flex:1"},[l.label||l.url]));
     row.appendChild(h("button",{class:"ghost","aria-label":"remove link",onclick:function(){delLink(b.id,l.id);}},["\u00d7"]));
     enableDrag(row,linksWrap,function(order){b.links.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-    swipeToDelete(row,function(){delLink(b.id,l.id);});
+    swipeToDelete(row,function(){delLink(b.id,l.id);},null,true);
     linksWrap.appendChild(row);});
   lnBody.appendChild(linksWrap);
   var hkBody=foldSection(app,"b-hooks","hooks",(b.hooks||[]).length,function(){addHookModal(b.id);},"+ add hook",false);
@@ -2672,7 +2692,7 @@ function renderBatches(){
       var del=h("button",{class:"ghost","aria-label":"delete",onclick:function(){delBatchItem(it.id);}},["×"]);
       [chk,txt,dayChip,del].forEach(function(x){row.appendChild(x);});
       enableDrag(row,tasks,function(order){g.items.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-      swipeToDelete(row,function(){delBatchItem(it.id);});
+      swipeToDelete(row,function(){delBatchItem(it.id);},null,true);
       tasks.appendChild(row);
     });
     section.appendChild(tasks);
@@ -2815,7 +2835,7 @@ function renderResources(){
     card.appendChild(h("div",{class:"note-card-p"},[first||"Empty note"]));
     card.appendChild(h("div",{class:"note-card-d"},[noteWhen(p.updated)]));
     enableDrag(card,notesWrap,function(order){S.resources.pages.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-    swipeToDelete(card,function(){delNote(p.id);},"Delete “"+(p.title.trim()||"Untitled note")+"”?");
+    swipeToDelete(card,function(){delNote(p.id);},"Delete “"+(p.title.trim()||"Untitled note")+"”?",true);
     notesWrap.appendChild(card);
   });
   app.appendChild(notesWrap);
@@ -2835,7 +2855,7 @@ function renderResources(){
       ]);
     }},["⋯"]));
     enableDrag(row,linksWrap,function(order){S.resources.links.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
-    swipeToDelete(row,function(){delResourceLink(l.id);});
+    swipeToDelete(row,function(){delResourceLink(l.id);},null,true);
     linksWrap.appendChild(row);
   });
   lb.appendChild(linksWrap);

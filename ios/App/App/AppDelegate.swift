@@ -1,12 +1,31 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    // The in-app background music is incidental to using the app, not a media
+    // player — .ambient keeps it off the Lock Screen / Control Center "Now
+    // Playing" card, silences it with the ringer switch, and stops it (rather
+    // than ducking) if something else plays audio, instead of the default
+    // category's behavior of showing full system media controls. WKWebView's
+    // own media engine can renegotiate the session once <audio> actually starts
+    // playing, so this gets reasserted on every route change, not just at launch.
+    private func applyAmbientAudioSession() {
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
+    }
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        applyAmbientAudioSession()
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.applyAmbientAudioSession()
+        }
         // Override point for customization after application launch.
         return true
     }
@@ -26,6 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        applyAmbientAudioSession()
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 

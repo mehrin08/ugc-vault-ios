@@ -135,7 +135,8 @@
           id: DAILY_ID,
           title: "Today's UGC tasks",
           body: 'Check your batch list and knock out today\u2019s deliverables.',
-          schedule: { on: { hour: t.hour, minute: t.minute }, allowWhileIdle: true }
+          schedule: { on: { hour: t.hour, minute: t.minute }, allowWhileIdle: true },
+          sound: 'default'
         });
       }
       if (s.weekly) {
@@ -143,7 +144,8 @@
           id: WEEKLY_ID,
           title: 'Plan your content batch',
           body: 'Set up this week\u2019s batching checklist by brand.',
-          schedule: { on: { weekday: 1, hour: 18, minute: 0 }, allowWhileIdle: true }
+          schedule: { on: { weekday: 1, hour: 18, minute: 0 }, allowWhileIdle: true },
+          sound: 'default'
         });
       }
       if (s.payments) {
@@ -151,7 +153,8 @@
           id: PAYMENT_ID,
           title: 'Payment check-in',
           body: 'Any invoices still awaiting payment? Follow up with your brands.',
-          schedule: { on: { weekday: 6, hour: 10, minute: 0 }, allowWhileIdle: true }
+          schedule: { on: { weekday: 6, hour: 10, minute: 0 }, allowWhileIdle: true },
+          sound: 'default'
         });
       }
       if (!list.length) return;
@@ -277,23 +280,10 @@
     if (settings() || store.get('promptShown', false)) return;
     setTimeout(function () {
       store.set('promptShown', true);
-      openSheet(function (sheet, close) {
-        var on = el('button', { className: 'uv-btn', text: 'Turn on reminders' });
-        var later = el('button', { className: 'uv-btn uv-secondary', text: 'Not now' });
-        on.addEventListener('click', function () {
-          enableReminders(defaults).then(close);
-        });
-        later.addEventListener('click', function () {
-          store.set('reminders', { daily: false, weekly: false, payments: false });
-          close();
-        });
-        [
-          el('h2', { text: 'Never miss a batch day' }),
-          el('p', { text: 'Get a daily task reminder at 9:00 AM, a Sunday batch-planning nudge and a Friday payment check-in. You can change these anytime from phone notifications.' }),
-          on, later
-        ].forEach(function (n) { sheet.appendChild(n); });
-      });
-    }, 2500);
+      // Goes straight to iOS's native permission dialog instead of an in-app
+      // sheet first — tapping the system "Allow" is what actually grants access.
+      enableReminders(defaults);
+    }, 1200);
   }
 
   function addBellButton() {
@@ -368,6 +358,7 @@
             title: opts.title || (opts.timer ? '\u23F0 Time\u2019s up' : '\u2661 ' + opts.task),
             body: opts.body || (opts.timer ? opts.task : 'Time to work on \u201C' + opts.task + '\u201D'),
             schedule: { at: when.toISOString(), allowWhileIdle: true },
+            sound: 'default',
             extra: { key: key, task: opts.task, kind: opts.timer ? 'timer' : 'task' }
           }]
         });
@@ -541,7 +532,7 @@
       ensurePermission().then(function (granted) {
         if (!granted) return;
         call('LocalNotifications', 'schedule', {
-          notifications: [{ id: nextId++, title: String(title), body: String(options.body || ''), extra: { kind: 'web' } }]
+          notifications: [{ id: nextId++, title: String(title), body: String(options.body || ''), sound: 'default', extra: { kind: 'web' } }]
         }).catch(function () {});
       });
     }
@@ -580,6 +571,7 @@
             title: String(r.title || 'Reminder'),
             body: String(r.body || ''),
             schedule: { at: at.toISOString(), allowWhileIdle: true },
+            sound: 'default',
             extra: { kind: 'task', key: String(r.key) }
           });
         });
@@ -693,6 +685,24 @@
     }, true);
   }
 
+  // Cancels any pending notification this session doesn't recognize as one it scheduled.
+  // Catches drift from earlier bugs/testing so stale reminders can't pile up and fire in a
+  // burst later — this is a self-healing cleanup, independent of whatever caused the drift.
+  function cleanupOrphanedNotifications() {
+    return call('LocalNotifications', 'getPending').then(function (res) {
+      var pending = (res && res.notifications) || [];
+      if (!pending.length) return;
+      var known = {};
+      known[DAILY_ID] = true; known[WEEKLY_ID] = true; known[PAYMENT_ID] = true;
+      var tasks = savedReminders();
+      Object.keys(tasks).forEach(function (k) { known[tasks[k].id] = true; });
+      store.get('synced', []).forEach(function (id) { known[id] = true; });
+      var orphaned = pending.filter(function (n) { return !known[n.id]; }).map(function (n) { return { id: n.id }; });
+      if (!orphaned.length) return;
+      return call('LocalNotifications', 'cancel', { notifications: orphaned }).catch(function () {});
+    }).catch(function () {});
+  }
+
   /* ---------- Start ---------- */
 
   function start() {
@@ -703,6 +713,7 @@
     watchNetwork();
     watchTaps();
     firstRunPrompt();
+    cleanupOrphanedNotifications();
     var s = settings();
     if (s) scheduleReminders(s).catch(function () {});
     call('SplashScreen', 'hide').catch(function () {});

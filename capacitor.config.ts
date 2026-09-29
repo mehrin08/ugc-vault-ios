@@ -24,8 +24,7 @@ const config: CapacitorConfig = {
       showSpinner: false
     },
     LocalNotifications: {
-      // While the app is open it shows its own reminder banner, so iOS only plays the sound.
-      presentationOptions: ['sound', 'list']
+      presentationOptions: ['badge', 'sound', 'alert']
     }
   }
 };
