@@ -286,7 +286,20 @@ html[data-theme="dark"] .auth-hero-title{background:linear-gradient(100deg,#F3A7
 .count-btn{width:34px;height:40px;border:none;background:transparent;cursor:pointer;color:var(--accent);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .count-num{min-width:46px;text-align:center;font-family:DM Sans,Outfit;font-weight:500;font-size:13.5px;color:var(--accent);cursor:pointer;padding:0;white-space:nowrap;background:transparent;border:none}
 .row.count-row .t-txt{padding-left:33px}
-.task-segs{display:flex;gap:8px;margin:2px 2px 14px}
+.task-segs{display:flex;gap:8px;margin:2px 2px 14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.task-segs::-webkit-scrollbar{display:none}
+.task-segs .seg{flex:1 0 auto;padding:0 16px;white-space:nowrap}
+.task-segs .seg-edit{flex:0 0 46px;padding:0;font-size:16px}
+.sec-edit-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-radius:14px}
+.sec-edit-row.dragging{background:var(--glass-bg);box-shadow:0 10px 26px rgba(var(--sh),.28)}
+.sec-edit-in{flex:1;min-width:0;margin:0;padding:11px 12px;font-size:14.5px}
+.sec-edit-n{font-family:Inter;font-size:11px;color:var(--muted);white-space:nowrap}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.14);cursor:pointer;padding:0;position:relative;flex:none}
+.swatch.on{box-shadow:0 0 0 2.5px var(--accent),0 2px 8px rgba(0,0,0,.18)}
+.sw-default{background:conic-gradient(#F6C1D3,#DACDF5,#B9E0F6,#B7E4DC,#FBD9C4,#F6C1D3)}
+.sw-custom{background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);overflow:hidden}
+.swatch-in{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0}
 .goal-set{width:26px;height:26px;border-radius:50%;flex-shrink:0;cursor:pointer;color:var(--muted);background:transparent;border:1px dashed var(--glass-bd);display:flex;align-items:center;justify-content:center;padding:0;opacity:.65}
 .move-list{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);background:var(--field);border:1px solid var(--glass-bd);box-shadow:inset 0 1px 1px rgba(255,255,255,.5);opacity:.85}
 .sec-lists{display:block}
@@ -837,7 +850,10 @@ function applyBlob(p){
   S.brands=((p&&p.brands)?p.brands:[]).map(normBrand);
   S.tab=(p&&p.tab)||"tasks";
   if(S.tab==="batches")S.tab="tasks";
-  S.taskView=(p&&p.taskView==="batch")?"batch":"daily";
+  S.sections=normSections(p&&p.sections);
+  S.lists.forEach(function(l){if(!sectionById(l.kind))l.kind=S.sections[0].id;});
+  S.taskView=(p&&sectionById(p.taskView))?p.taskView:S.sections[0].id;
+  S.themeColor=normTheme(p&&p.themeColor);
   S.deals=((p&&p.deals)?p.deals:[]).map(normDeal);
   S.payments=((p&&p.payments)?p.payments:[]).map(normPayment);
   // payments used to always show newest-date-first; they're now in a custom (draggable) order,
@@ -862,7 +878,7 @@ function applyBlob(p){
   S.musicTrack=(p&&typeof p.musicTrack==="number"&&MUSIC_TRACKS[p.musicTrack])?p.musicTrack:0;
   document.documentElement.setAttribute("data-theme",S.mode);
 }
-function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,musicTrack:S.musicTrack,calendarItems:S.calendarItems,payOrdered:S.payOrdered};}
+function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,musicTrack:S.musicTrack,calendarItems:S.calendarItems,payOrdered:S.payOrdered,sections:S.sections,themeColor:S.themeColor};}
 function normCalendarItem(x){x=x||{};return {id:x.id||uid(),date:/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:today(),title:x.title||"",done:!!x.done};}
 function normResources(r){r=r||{};
   var pages=Array.isArray(r.pages)?r.pages.map(function(p){return {id:p.id||uid(),title:p.title||"",body:p.body||"",updated:p.updated||""};})
@@ -949,7 +965,91 @@ function focusPicker(){
 }
 function toggleRepeat(sid){var f=findSub(sid);if(f){f.s.repeat=!f.s.repeat;f.s.fired="";commit();}}
 function clearDone(){S.lists=S.lists.map(function(l){return Object.assign({},l,{subs:l.subs.map(function(s){return s.done?Object.assign({},s,{done:false}):s;})});});commit();}
-function addList(t,kind){t=(t||"").trim();if(!t)return;S.lists.push({id:uid(),title:t,emoji:"",kind:(kind==="batch"?"batch":"daily"),subs:[]});commit();}
+// ── task sections (the pages inside the tasks tab: "daily tasks", "batching tasks", or your own) ──
+// A list's .kind is the id of the section it lives in. Every list resets each morning regardless.
+var DEFAULT_SECTIONS=[{id:"daily",name:"daily tasks"},{id:"batch",name:"batching tasks"}];
+function normSections(a){
+  var seen={},out=(Array.isArray(a)?a:[]).map(function(x){x=x||{};return {id:String(x.id||uid()),name:String(x.name||"").trim()||"untitled"};}).filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
+  return out.length?out:DEFAULT_SECTIONS.map(function(x){return {id:x.id,name:x.name};});
+}
+function sectionById(id){return (S.sections||[]).find(function(x){return x.id===id;})||null;}
+function validSection(id){return sectionById(id)?id:S.sections[0].id;}
+function addSection(name){name=(name||"").trim();if(!name)return null;var sec={id:uid(),name:name};S.sections.push(sec);save();return sec;}
+function renameSection(id,name){var sec=sectionById(id);name=(name||"").trim();if(sec&&name){sec.name=name;save();}}
+function delSection(id){
+  if(S.sections.length<2)return;
+  var rest=S.sections.filter(function(x){return x.id!==id;});
+  S.lists.forEach(function(l){if(l.kind===id)l.kind=rest[0].id;});
+  S.sections=rest;
+  if(S.taskView===id)S.taskView=rest[0].id;
+  save();
+}
+function sectionsEditor(){
+  var ov=h("div",{class:"overlay"});function close(){ov.remove();render();}
+  ov.addEventListener("click",function(e){if(e.target===ov)close();});
+  var card=h("div",{class:"glass editor"});ov.appendChild(card);document.body.appendChild(ov);
+  function paint(){
+    card.innerHTML="";
+    card.appendChild(h("div",{class:"ed-hd",html:'✎ <span class="t">Task sections</span>'}));
+    card.appendChild(h("p",{class:"ed-sub",style:"margin-bottom:12px"},["The pages inside your tasks tab. Rename them, add your own, or hold and drag to reorder."]));
+    var wrap=h("div",{class:"sec-edit-list"});
+    S.sections.forEach(function(sec){
+      var n=S.lists.filter(function(l){return l.kind===sec.id;}).length;
+      var row=h("div",{class:"sec-edit-row"});row.dataset.drag=sec.id;
+      row.appendChild(h("span",{class:"grip big"},["⠇"]));
+      var inp=h("input",{class:"auth-in sec-edit-in",value:sec.name,"aria-label":"section name"});
+      inp.addEventListener("change",function(){if(inp.value.trim())renameSection(sec.id,inp.value);else inp.value=sec.name;});
+      inp.addEventListener("keydown",function(e){if(e.key==="Enter")inp.blur();});
+      row.appendChild(inp);
+      row.appendChild(h("span",{class:"sec-edit-n"},[n+(n===1?" list":" lists")]));
+      row.appendChild(h("button",{class:"ghost","aria-label":"delete "+sec.name,onclick:function(){
+        if(S.sections.length<2){flash("keep at least one section");return;}
+        var other=S.sections.filter(function(x){return x.id!==sec.id;})[0];
+        confirmModal("Delete “"+sec.name+"”?"+(n?" Its "+n+(n===1?" list moves":" lists move")+" to “"+other.name+"”.":""),function(){delSection(sec.id);paint();});
+      }},["×"]));
+      enableDrag(row,wrap,function(order){S.sections.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();paint();});
+      wrap.appendChild(row);
+    });
+    card.appendChild(wrap);
+    var ni=h("input",{class:"auth-in",placeholder:"new section (e.g. weekly goals)"});
+    function add(){if(addSection(ni.value))paint();}
+    ni.addEventListener("keydown",function(e){if(e.key==="Enter")add();});
+    card.appendChild(h("div",{class:"add-row",style:"margin-top:10px"},[ni,h("button",{class:"add-btn","aria-label":"add section",onclick:add},["+"])]));
+    card.appendChild(h("button",{class:"solid-btn",style:"height:44px;border-radius:14px;margin-top:14px;width:100%",onclick:close},["done"]));
+  }
+  paint();
+}
+
+// ── theme color: "default" keeps each tab's own colors; any other choice recolors the whole app ──
+var THEME_PRESETS=[{n:"rose",h:340},{n:"pink",h:318},{n:"peach",h:22},{n:"gold",h:42},{n:"mint",h:152},{n:"teal",h:172},{n:"sky",h:200},{n:"blue",h:222},{n:"lavender",h:258},{n:"lilac",h:285},{n:"graphite",h:220,k:0.12}];
+function normTheme(t){if(!t||typeof t.h!=="number"||!isFinite(t.h))return null;return {h:((Math.round(t.h)%360)+360)%360,k:(typeof t.k==="number"&&isFinite(t.k))?Math.max(0,Math.min(1.3,t.k)):1,hex:typeof t.hex==="string"?t.hex:""};}
+function hslRgb(h,s,l){s=Math.max(0,Math.min(100,s))/100;l=Math.max(0,Math.min(100,l))/100;var a=s*Math.min(l,1-l);function f(n){var k=(n+h/30)%12;return Math.round((l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1))))*255);}return [f(0),f(8),f(4)];}
+function hexToHsl(hex){var m=/^#?([0-9a-f]{6})$/i.exec(hex||"");if(!m)return null;var n=parseInt(m[1],16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,h=0,l=(mx+mn)/2,s=d?d/(1-Math.abs(2*l-1)):0;if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}return {h:h,s:s*100,l:l*100};}
+function themeCSS(t){
+  var h=t.h,k=t.k;
+  function hue(d){return ((h+d)%360+360)%360;}
+  function trip(hh,s,l){return hslRgb(hh,s*k,l).join(",");}
+  function hx(hh,s,l){return "#"+hslRgb(hh,s*k,l).map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");}
+  var css="html body.ct[data-sec]{--s1:"+trip(h,50,78)+";--s2:"+trip(h,42,63)+";--sc1:"+hx(h,46,80)+";--sc2:"+hx(h,40,65)+";--accent:"+hx(h,60,30)+";--blob1:"+hx(h,55,85)+";--blob2:"+hx(h,50,75)+";--h1:"+hx(h,65,92)+";--h2:"+hx(h,43,60)+";--h3:"+hx(h,56,37)+";--bg:linear-gradient(180deg,"+hx(h,57,97)+" 0%,"+hx(h,57,94)+" 60%,"+hx(h,45,90)+" 100%)}\n";
+  css+="html[data-theme=\"dark\"] body.ct[data-sec]{--accent:"+hx(h,58,68)+";--bg:linear-gradient(160deg,"+hx(h,25,12.5)+" 0%,"+hx(h,23,15)+" 50%,"+hx(h,26,11)+" 100%)}\n";
+  css+="body.ct .tab{--tc:"+trip(h,50,80)+";--tf:"+hx(h,60,30)+"}\n";
+  [-18,-9,0,9,18].forEach(function(d,i){var hh=hue(d);
+    css+="body.ct .lt-"+i+"{--lt1:"+trip(hh,85,93)+";--lt2:"+trip(hh,78,85)+";--lt3:"+trip(hh,72,71)+";--ltx:"+hx(hh,60,34)+"}\n";
+    css+="html[data-theme=\"dark\"] body.ct .lt-"+i+"{--ltx:"+hx(hh,80,80)+"}\n";});
+  return css;
+}
+var themeKey=null;
+function applyTheme(){
+  var t=S.themeColor,key=t?t.h+"/"+t.k:"";
+  if(key===themeKey)return;themeKey=key;
+  var el=document.getElementById("ct-style");
+  if(!el){el=document.createElement("style");el.id="ct-style";document.head.appendChild(el);}
+  el.textContent=t?themeCSS(t):"";
+  document.body.classList.toggle("ct",!!t);
+}
+function setTheme(t){S.themeColor=normTheme(t);applyTheme();save();}
+
+function addList(t,kind){t=(t||"").trim();if(!t)return;S.lists.push({id:uid(),title:t,emoji:"",kind:validSection(kind),subs:[]});commit();}
 function delList(lid){S.lists=S.lists.filter(function(l){return l.id!==lid;});commit();}
 function dupList(lid){var i=S.lists.findIndex(function(l){return l.id===lid;});if(i<0)return;var l=S.lists[i];var copy={id:uid(),title:l.title+" copy",emoji:l.emoji,subs:l.subs.map(function(s){return Object.assign({},s,{id:uid(),done:false,fired:"",snooze:""});})};S.lists.splice(i+1,0,copy);commit();}
 function renameList(lid,t){t=(t||"").trim();var l=S.lists.find(function(x){return x.id===lid;});if(l&&t){l.title=t;commit();}else render();}
@@ -1191,8 +1291,8 @@ function countIcon(size){size=size||14;return '<svg width="'+size+'" height="'+s
 function moveIcon(size){size=size||13;return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="#E86FB6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M8 7h11l-3-3M16 17H5l3 3"/></svg>';}
 function setTarget(sid,n){var f=findSub(sid);if(!f)return;n=Math.round(n)||1;if(n<1)n=1;if(n>99)n=99;f.s.target=n;if((f.s.count||0)>n)f.s.count=n;if(n===1){f.s.count=0;}else{f.s.done=(f.s.count||0)>=n;}commit();}
 function stepCount(sid,d){var f=findSub(sid);if(!f)return;var t=f.s.target||1;var c=(f.s.count||0)+d;if(c<0)c=0;if(c>t)c=t;f.s.count=c;f.s.done=c>=t;commit();}
-function setKind(lid,kind){var l=S.lists.find(function(x){return x.id===lid;});if(l){l.kind=(kind==="batch"?"batch":"daily");commit();}}
-function reorderKind(kind,order){var ordered=S.lists.filter(function(l){return (l.kind||"daily")===kind;}).sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});var i=0;S.lists=S.lists.map(function(l){return (l.kind||"daily")===kind?ordered[i++]:l;});save();render();}
+function setKind(lid,kind){var l=S.lists.find(function(x){return x.id===lid;});if(l){l.kind=validSection(kind);commit();}}
+function reorderKind(kind,order){var ordered=S.lists.filter(function(l){return l.kind===kind;}).sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});var i=0;S.lists=S.lists.map(function(l){return l.kind===kind?ordered[i++]:l;});save();render();}
 function openGoal(sid){var f=findSub(sid);if(!f)return;var s=f.s;var ov=h("div",{class:"overlay"});function close(){ov.remove();render();}ov.addEventListener("click",function(e){if(e.target===ov)close();});var card=h("div",{class:"glass editor"});card.appendChild(h("div",{class:"ed-hd",html:countIcon(18)+' <span class="t">How many?</span>'}));card.appendChild(h("p",{class:"ed-sub",style:"margin-bottom:14px;line-height:1.5"},["Track this task as a set. For example, post 5 videos shows 1 of 5 done, then 2 of 5, until it is complete."]));var picks=h("div",{style:"display:flex;flex-wrap:wrap;gap:8px"});[2,3,4,5,7,10].forEach(function(n){picks.appendChild(h("button",{class:"preset"+((s.target||1)===n?" on":""),onclick:function(){setTarget(sid,n);close();}},[String(n)]));});card.appendChild(picks);var custom=h("input",{class:"ed-time",type:"number",min:"1",max:"99",value:String(s.target||1),placeholder:"custom number",style:"margin-top:10px"});card.appendChild(custom);var rowb=h("div",{style:"display:flex;gap:8px;margin-top:14px"});rowb.appendChild(h("button",{class:"soft-btn",onclick:function(){setTarget(sid,1);close();}},["single task"]));rowb.appendChild(h("button",{class:"solid-btn",style:"flex:1;height:46px;border-radius:14px",onclick:function(){setTarget(sid,parseInt(custom.value,10)||1);close();}},["save"]));card.appendChild(rowb);ov.appendChild(card);document.body.appendChild(ov);}
 // ── subtasks and linked scripts on tasks ──
 function subItems(s){return s.items||(s.items=[]);}
@@ -1374,12 +1474,14 @@ function renderTasks(){
   }
 
   function listMenu(l){
-    var curKind=(l.kind||"daily");
+    var curKind=l.kind;
     var items=[];
     if(l.subs.length)items.push({icon:alarmIcon(15),label:"set a timer for every task",onclick:function(){openEditor({allLid:l.id});}});
     items.push({icon:"✎",label:"rename list",onclick:function(){uiSet("list:"+l.id,true);render();var el=document.querySelector('section[data-drag="'+l.id+'"] h2');if(el)startRename(el,l.title,false,function(v){renameList(l.id,v);});}});
     items.push({icon:l.emoji||"＋",label:l.emoji?"change icon":"add an icon",onclick:function(){openEmoji(l.id);}});
-    items.push({icon:moveIcon(15),label:curKind==="batch"?"move to daily tasks":"move to batching tasks",onclick:function(){setKind(l.id,curKind==="batch"?"daily":"batch");}});
+    var others=S.sections.filter(function(x){return x.id!==curKind;});
+    if(others.length===1)items.push({icon:moveIcon(15),label:"move to "+others[0].name,onclick:function(){setKind(l.id,others[0].id);}});
+    else if(others.length>1)items.push({icon:moveIcon(15),label:"move to…",onclick:function(){menuSheet("Move “"+l.title+"” to",others.map(function(o){return {icon:moveIcon(15),label:o.name,onclick:function(){setKind(l.id,o.id);}};}));}});
     items.push({icon:copyIcon(),label:"duplicate list",onclick:function(){dupList(l.id);}});
     items.push({icon:"×",label:"delete list",danger:true,onclick:function(){confirmModal("Delete “"+l.title+"” and its tasks?",function(){delList(l.id);});}});
     menuSheet(l.title,items);
@@ -1412,24 +1514,26 @@ function renderTasks(){
     }
     return section;
   }
-  function curKindOf(l){return l.kind||"daily";}
+  function curKindOf(l){return l.kind;}
 
-  // sub-view toggle: daily and batching are separate pages, not one long scroll
-  var view=(S.taskView==="batch")?"batch":"daily";
+  // one page per task section (daily tasks, batching tasks, or your own) — not one long scroll
+  var view=validSection(S.taskView);
+  var curSec=sectionById(view);
   var segWrap=h("div",{class:"task-segs"});
-  [["daily","daily tasks"],["batch","batching tasks"]].forEach(function(p){
-    segWrap.appendChild(h("button",{class:"seg"+(view===p[0]?" on":""),onclick:function(){if(S.taskView!==p[0]){S.taskView=p[0];save();render();}}},[p[1]]));
+  S.sections.forEach(function(sec){
+    segWrap.appendChild(h("button",{class:"seg"+(view===sec.id?" on":""),onclick:function(){if(S.taskView!==sec.id){S.taskView=sec.id;save();render();}}},[sec.name]));
   });
+  segWrap.appendChild(h("button",{class:"seg seg-edit",title:"edit sections","aria-label":"edit task sections",onclick:sectionsEditor},["✎"]));
   listsWrap.appendChild(segWrap);
 
   var group=h("div",{class:"sec-lists"});group.dataset.kind=view;
-  var arr=S.lists.filter(function(l){return (l.kind||"daily")===view;});
+  var arr=S.lists.filter(function(l){return l.kind===view;});
   // first time you see a list, only the first one with something left to do is open
   var firstOpen=arr.find(function(l){return l.subs.some(function(s){return !s.done;});})||arr[0];
   arr.forEach(function(l){group.appendChild(buildListCard(l,group,firstOpen&&firstOpen.id));});
-  if(!arr.length)group.appendChild(h("p",{class:"sec-empty"},[view==="batch"?"No batching lists yet — add one below, or use ⋯ → move on a daily list.":"No daily lists yet — add one below."]));
+  if(!arr.length)group.appendChild(h("p",{class:"sec-empty"},["No lists in “"+curSec.name+"” yet — add one below"+(S.sections.length>1?", or use ⋯ → move on a list from another section.":".")]));
   listsWrap.appendChild(group);
-  var nl=h("input",{class:"txt-in",style:"background:transparent;border:none",placeholder:(view==="batch"?"new batching list":"new daily list"),onkeydown:function(e){if(e.key==="Enter"){addList(nl.value,view);nl.value="";}}});
+  var nl=h("input",{class:"txt-in",style:"background:transparent;border:none",placeholder:"new list in "+curSec.name,onkeydown:function(e){if(e.key==="Enter"){addList(nl.value,view);nl.value="";}}});
   listsWrap.appendChild(h("div",{class:"glass newlist"},[nl,h("button",{class:"add-btn",style:"width:92px;font-size:13px;font-family:DM Sans,Outfit;font-weight:500",onclick:function(){addList(nl.value,view);nl.value="";}},["+ list"])]));
   app.appendChild(listsWrap);
   app.appendChild(h("p",{class:"foot"},["tasks reset each morning · press & hold a list or task to reorder"]));
@@ -1919,7 +2023,7 @@ function renderHome(){
     h("span",{class:"tt-count"},[doneT+" of "+totT+" done"])
   ]));
 }
-function render(){ document.body.setAttribute("data-sec",({home:1,tasks:1,scripts:1,deals:1,payments:1,calendar:1,resources:1})[S.tab]?S.tab:"tasks"); document.body.classList.toggle("script-editing", S.tab==="scripts"&&!!scr.script); if(S.tab==="home")renderHome(); else if(S.tab==="scripts")renderScripts(); else if(S.tab==="deals")renderDeals(); else if(S.tab==="payments")renderPayments(); else if(S.tab==="calendar")renderCalendar(); else if(S.tab==="resources")renderResources(); else renderTasks(); }
+function render(){ applyTheme(); document.body.setAttribute("data-sec",({home:1,tasks:1,scripts:1,deals:1,payments:1,calendar:1,resources:1})[S.tab]?S.tab:"tasks"); document.body.classList.toggle("script-editing", S.tab==="scripts"&&!!scr.script); if(S.tab==="home")renderHome(); else if(S.tab==="scripts")renderScripts(); else if(S.tab==="deals")renderDeals(); else if(S.tab==="payments")renderPayments(); else if(S.tab==="calendar")renderCalendar(); else if(S.tab==="resources")renderResources(); else renderTasks(); }
 function buildTabs(){
   function mk(id,label){var b=h("button",{class:"tab t-"+id+(S.tab===id?" on":""),onclick:function(){if(S.tab!==id){S.tab=id;save();render();}}});b.innerHTML=label;return b;}
   var pills=h("div",{class:"tabs"},[mk("home","\u2302 home"),mk("tasks","\u2713 tasks"),mk("scripts",heart(12)+" scripts"),mk("deals",crystal(12)+" deals"),mk("payments","\uD83D\uDCB0 pay"),mk("calendar","\uD83D\uDCC5 calendar"),mk("resources","\uD83D\uDDC2\uFE0F notes")]);
@@ -2348,6 +2452,24 @@ function settingsMenu(){
   }
 
   card.appendChild(row("dark mode", switchEl(S.mode==="dark", function(){toggleMode();close();settingsMenu();})));
+
+  var thWrap=h("div",{style:"padding:10px 0;border-bottom:1px solid var(--glass-bd)"});
+  thWrap.appendChild(h("div",{style:"font-family:Inter;font-size:13.5px;color:var(--ink);margin-bottom:10px"},["theme color"]));
+  var sw=h("div",{class:"swatches"});
+  var cur=S.themeColor;
+  function isOn(p){return cur&&!cur.hex&&cur.h===p.h&&Math.abs(cur.k-(p.k||1))<.001;}
+  sw.appendChild(h("button",{class:"swatch sw-default"+(cur?"":" on"),title:"default — each tab keeps its own color","aria-label":"default colors",onclick:function(){setTheme(null);close();settingsMenu();}},[]));
+  THEME_PRESETS.forEach(function(pr){
+    var c=hslRgb(pr.h,58*(pr.k||1),72);
+    sw.appendChild(h("button",{class:"swatch"+(isOn(pr)?" on":""),title:pr.n,"aria-label":pr.n,style:"background:rgb("+c.join(",")+")",onclick:function(){setTheme({h:pr.h,k:pr.k||1});close();settingsMenu();}},[]));
+  });
+  var pick=h("input",{type:"color",class:"swatch-in","aria-label":"pick any color",value:(cur&&cur.hex)||"#c77cd6"});
+  pick.addEventListener("input",function(){var x=hexToHsl(pick.value);if(x)setTheme({h:x.h,k:Math.min(1.3,x.s/55),hex:pick.value});});
+  pick.addEventListener("change",function(){close();settingsMenu();});
+  sw.appendChild(h("label",{class:"swatch sw-custom"+(cur&&cur.hex?" on":""),title:"any color",style:cur&&cur.hex?"background:"+cur.hex:""},[pick]));
+  thWrap.appendChild(sw);
+  thWrap.appendChild(h("div",{style:"font-family:Inter;font-size:11.5px;color:var(--muted);margin-top:8px"},[cur?"The whole app uses this color. Tap the first circle for the original colors.":"Each tab has its own color. Pick one to use it everywhere, or tap the last circle for any color."]));
+  card.appendChild(thWrap);
   card.appendChild(row("background music", switchEl(S.musicOn!==false, function(){
     S.musicOn=!(S.musicOn!==false);
     if(!S.musicOn){ musicUserPaused=true; try{pauseMusicHard();}catch(e){} } else { musicUserPaused=false; }
