@@ -108,6 +108,8 @@
 
   /* ---------- Reminders (local notifications) ---------- */
 
+  // Bundled into the app (www/sparkle.caf). On a build without the file iOS plays its default sound.
+  var SOUND = 'sparkle.caf';
   var DAILY_ID = 1001;
   var WEEKLY_ID = 1002;
   var PAYMENT_ID = 1003;
@@ -136,7 +138,7 @@
           title: "Today's UGC tasks",
           body: 'Check your batch list and knock out today\u2019s deliverables.',
           schedule: { on: { hour: t.hour, minute: t.minute }, allowWhileIdle: true },
-          sound: 'default'
+          sound: SOUND
         });
       }
       if (s.weekly) {
@@ -145,7 +147,7 @@
           title: 'Plan your content batch',
           body: 'Set up this week\u2019s batching checklist by brand.',
           schedule: { on: { weekday: 1, hour: 18, minute: 0 }, allowWhileIdle: true },
-          sound: 'default'
+          sound: SOUND
         });
       }
       if (s.payments) {
@@ -154,7 +156,7 @@
           title: 'Payment check-in',
           body: 'Any invoices still awaiting payment? Follow up with your brands.',
           schedule: { on: { weekday: 6, hour: 10, minute: 0 }, allowWhileIdle: true },
-          sound: 'default'
+          sound: SOUND
         });
       }
       if (!list.length) return;
@@ -275,15 +277,18 @@
     return script ? script.getAttribute('data-' + name) : null;
   }
 
-  function firstRunPrompt() {
+  // Every launch: if iOS hasn't asked yet, show its own "Allow Notifications" dialog right
+  // away (iOS only ever shows it once, so this stops as soon as the person answers).
+  function askPermissionOnLaunch() {
     if (scriptOption('first-run') === 'off') return;
-    if (settings() || store.get('promptShown', false)) return;
-    setTimeout(function () {
-      store.set('promptShown', true);
-      // Goes straight to iOS's native permission dialog instead of an in-app
-      // sheet first — tapping the system "Allow" is what actually grants access.
-      enableReminders(defaults);
-    }, 1200);
+    call('LocalNotifications', 'checkPermissions').then(function (res) {
+      var st = res && res.display;
+      if (st === 'granted' || st === 'denied') return;
+      setTimeout(function () {
+        if (settings()) ensurePermission().then(function (ok) { if (ok) document.dispatchEvent(new CustomEvent('ugcvault:permission-granted')); });
+        else enableReminders(defaults).then(function (ok) { if (ok) document.dispatchEvent(new CustomEvent('ugcvault:permission-granted')); });
+      }, 800);
+    }).catch(function () {});
   }
 
   function addBellButton() {
@@ -357,8 +362,8 @@
             id: id,
             title: opts.title || (opts.timer ? '\u23F0 Time\u2019s up' : '\u2661 ' + opts.task),
             body: opts.body || (opts.timer ? opts.task : 'Time to work on \u201C' + opts.task + '\u201D'),
-            schedule: { at: when.toISOString(), allowWhileIdle: true },
-            sound: 'default',
+            schedule: { at: when, allowWhileIdle: true },
+            sound: SOUND,
             extra: { key: key, task: opts.task, kind: opts.timer ? 'timer' : 'task' }
           }]
         });
@@ -532,7 +537,7 @@
       ensurePermission().then(function (granted) {
         if (!granted) return;
         call('LocalNotifications', 'schedule', {
-          notifications: [{ id: nextId++, title: String(title), body: String(options.body || ''), sound: 'default', extra: { kind: 'web' } }]
+          notifications: [{ id: nextId++, title: String(title), body: String(options.body || ''), sound: SOUND, extra: { kind: 'web' } }]
         }).catch(function () {});
       });
     }
@@ -570,8 +575,8 @@
             id: idFor('sync:' + r.key),
             title: String(r.title || 'Reminder'),
             body: String(r.body || ''),
-            schedule: { at: at.toISOString(), allowWhileIdle: true },
-            sound: 'default',
+            schedule: { at: at, allowWhileIdle: true },
+            sound: SOUND,
             extra: { kind: 'task', key: String(r.key) }
           });
         });
@@ -712,7 +717,7 @@
     addBellButton();
     watchNetwork();
     watchTaps();
-    firstRunPrompt();
+    askPermissionOnLaunch();
     cleanupOrphanedNotifications();
     var s = settings();
     if (s) scheduleReminders(s).catch(function () {});
