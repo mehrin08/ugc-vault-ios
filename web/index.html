@@ -34,7 +34,9 @@ html[data-theme="dark"]{
   --glass-sh:0 12px 34px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.08);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-body{min-height:100vh;background:var(--bg);font-family:Inter,system-ui,sans-serif;position:relative;overflow-x:hidden;transition:background .4s ease}
+body{min-height:100vh;background:var(--bg);font-family:Inter,system-ui,sans-serif;position:relative;overflow-x:hidden;transition:background .4s ease;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* app labels aren't selectable text (no Copy/Look Up menu on long-press); anything you type in still is */
+input,textarea,select,[contenteditable=true],[contenteditable=true] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 .blob{position:fixed;border-radius:50%;filter:blur(20px);opacity:.7;z-index:0;pointer-events:none}
 .blob.pink{top:-120px;right:-90px;width:320px;height:320px;background:radial-gradient(circle,var(--blob1),transparent 70%)}
 .blob.lav{bottom:-140px;left:-100px;width:360px;height:360px;background:radial-gradient(circle,var(--blob2),transparent 70%)}
@@ -98,9 +100,14 @@ h2{font-family:DM Sans,Outfit;font-weight:500;font-size:15.3px;color:var(--ink);
 .remind-all{display:flex;align-items:center;gap:5px;height:32px;padding:0 11px;border-radius:99px;cursor:pointer;color:var(--accent);background:linear-gradient(135deg,rgba(var(--s1),.5),rgba(var(--s2),.5));border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 1px rgba(255,255,255,.5);font-family:DM Sans,Outfit;font-size:10.8px}
 .ghost{border:none;background:transparent;color:var(--faint);font-size:18px;line-height:1;cursor:pointer;padding:2px 3px;flex-shrink:0;display:flex;align-items:center}
 /* row */
-.row{display:flex;align-items:center;gap:7px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.4);border-radius:12px;transition:background .2s,box-shadow .2s;animation:rise .35s ease both;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.row{display:flex;align-items:center;gap:7px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.4);border-radius:12px;transition:background .2s,box-shadow .2s;animation:rise .35s ease backwards;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .row:last-of-type{border-bottom:none}
-.row.dragging{background:rgba(255,255,255,.6);box-shadow:0 8px 22px rgba(var(--sh),.28);border-bottom:1px solid transparent;animation:none}
+.row.dragging{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);box-shadow:0 10px 26px rgba(var(--sh),.3);border-bottom:1px solid transparent;animation:none}
+html[data-theme="dark"] .row.dragging{background:rgba(28,30,34,.78)}
+.dragging:not(.row){box-shadow:0 16px 36px rgba(var(--sh),.34)}
+.drag-live>*,.settle *{animation:none!important}
+[data-drag]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+[data-drag] input,[data-drag] textarea,[data-drag] [contenteditable=true]{-webkit-user-select:text;user-select:text}
 .check{width:26px;height:26px;border-radius:50%;flex-shrink:0;cursor:pointer;background:var(--field);border:1.5px solid rgba(var(--s2),.7);display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:inset 0 1px 1px rgba(255,255,255,.6)}
 .check.on{background:linear-gradient(135deg,var(--sc1),var(--sc2));border:1.5px solid transparent}
 .check.on::after{content:"✓";color:#fff;font-size:11.2px;line-height:1}
@@ -510,7 +517,7 @@ html[data-theme="dark"] .lh-count{background:rgba(255,255,255,.08)}
 .more-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .more-btn[aria-expanded="true"]{background:rgba(255,255,255,.6);color:var(--accent)}
 .chip.sm{height:30px;padding:0 10px;font-size:10.8px}
-.row-more{display:flex;flex-wrap:wrap;gap:6px;padding:2px 4px 12px 37px;animation:rise .2s ease both}
+.row-more{display:flex;flex-wrap:wrap;gap:6px;padding:2px 4px 12px 37px;animation:rise .2s ease backwards}
 .count-row + .row-more{padding-left:4px}
 .act{height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--glass-bd);background:var(--field);font-family:DM Sans,Outfit;font-weight:500;font-size:11.5px;color:var(--ltx,var(--accent));display:flex;align-items:center;gap:5px;cursor:pointer}
 .act.danger{color:#C0476F}
@@ -833,6 +840,10 @@ function applyBlob(p){
   S.taskView=(p&&p.taskView==="batch")?"batch":"daily";
   S.deals=((p&&p.deals)?p.deals:[]).map(normDeal);
   S.payments=((p&&p.payments)?p.payments:[]).map(normPayment);
+  // payments used to always show newest-date-first; they're now in a custom (draggable) order,
+  // seeded once from that date order so nothing jumps the first time
+  S.payOrdered=!!(p&&p.payOrdered);
+  if(!S.payOrdered){S.payments.sort(byPayDateDesc);S.payOrdered=true;}
   S.batchTarget=(p&&typeof p.batchTarget==="number")?p.batchTarget:0;
   S.monthlyGoal=(p&&typeof p.monthlyGoal==="number")?p.monthlyGoal:0;
   var rawPlan=((p&&p.batchPlan)?p.batchPlan:[]).slice();
@@ -851,7 +862,7 @@ function applyBlob(p){
   S.musicTrack=(p&&typeof p.musicTrack==="number"&&MUSIC_TRACKS[p.musicTrack])?p.musicTrack:0;
   document.documentElement.setAttribute("data-theme",S.mode);
 }
-function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,musicTrack:S.musicTrack,calendarItems:S.calendarItems};}
+function stateBlob(){return {lists:S.lists,lastReset:today(),streak:S.streak,lastComplete:S.lastComplete,win:S.win,mode:S.mode,focus:S.focus,brands:S.brands,tab:S.tab,taskView:S.taskView,sound:S.sound,sfxVolume:S.sfxVolume,deals:S.deals,payments:S.payments,batches:S.batches,batchPlan:S.batchPlan,batchTarget:S.batchTarget,monthlyGoal:S.monthlyGoal,resources:S.resources,musicOn:S.musicOn,volume:S.volume,musicTrack:S.musicTrack,calendarItems:S.calendarItems,payOrdered:S.payOrdered};}
 function normCalendarItem(x){x=x||{};return {id:x.id||uid(),date:/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:today(),title:x.title||"",done:!!x.done};}
 function normResources(r){r=r||{};
   var pages=Array.isArray(r.pages)?r.pages.map(function(p){return {id:p.id||uid(),title:p.title||"",body:p.body||"",updated:p.updated||""};})
@@ -967,53 +978,128 @@ document.addEventListener("click",function(e){
   var t=e.target;
   while(t){if(DRAG_SUPPRESS.has(t)){DRAG_SUPPRESS.delete(t);e.stopPropagation();e.preventDefault();return;}t=t.parentElement;}
 },true);
+function dragHaptic(style){try{var C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.nativePromise)C.nativePromise("Haptics","impact",{style:style}).catch(function(){});}catch(e){}}
+// Everything is measured once when the drag starts; after that only transforms change, so
+// the dragged item tracks the finger 1:1 and the others glide aside without any layout work.
+// A "block" is an item plus any following siblings marked data-drag-tail (e.g. a task's
+// open subtask panel), so those travel with it.
+// Reorder only the items listed in ids (e.g. a filtered or per-day view) inside the full array;
+// they take over the slots they already occupied, so everything else stays exactly where it was.
+function reorderSubset(arr,ids){
+  var slots=[],byId={};
+  arr.forEach(function(x,i){if(ids.indexOf(x.id)>=0){slots.push(i);byId[x.id]=x;}});
+  ids.forEach(function(id,k){if(byId[id]&&k<slots.length)arr[slots[k]]=byId[id];});
+}
+function dragSession(container,dragEl){
+  var sy=window.scrollY;
+  var info=[].slice.call(container.children).filter(function(c){return c.dataset&&c.dataset.drag;}).map(function(el){
+    var block=[el],n=el.nextElementSibling;
+    while(n&&n.dataset&&!n.dataset.drag&&n.dataset.dragTail){block.push(n);n=n.nextElementSibling;}
+    var a=el.getBoundingClientRect(),b=block[block.length-1].getBoundingClientRect();
+    return {el:el,block:block,top:a.top+sy,bottom:b.bottom+sy,mid:(a.top+a.bottom)/2+sy,shift:0};
+  });
+  info.forEach(function(it,i){
+    var nx=info[i+1],pv=info[i-1];
+    it.gap=nx?Math.max(0,nx.top-it.bottom):(pv?Math.max(0,it.top-pv.bottom):0);
+    it.stride=it.bottom-it.top+it.gap;
+  });
+  var from=-1;info.forEach(function(it,i){if(it.el===dragEl)from=i;});
+  var me=info[from],to=from,dy=0;
+  container.classList.add("drag-live");
+  me.block.forEach(function(el){el.style.transition="none";el.style.position="relative";el.style.zIndex="20";el.style.willChange="transform";});
+  info.forEach(function(it,i){if(i!==from)it.block.forEach(function(el){el.style.transition="transform .22s cubic-bezier(.2,.8,.2,1)";el.style.willChange="transform";});});
+  function paint(){
+    var center=me.mid+dy,t=0; // the grabbed item itself, not its attached panel
+    info.forEach(function(it,i){if(i!==from&&(it.top+it.bottom)/2<center)t++;});
+    if(t!==to){to=t;dragHaptic("LIGHT");}
+    info.forEach(function(it,i){
+      if(i===from)return;
+      var s=(from<to&&i>from&&i<=to)?-me.stride:(to<from&&i>=to&&i<from)?me.stride:0;
+      if(s!==it.shift){it.shift=s;it.block.forEach(function(el){el.style.transform=s?"translate3d(0,"+s+"px,0)":"";});}
+    });
+    me.block.forEach(function(el){el.style.transform="translate3d(0,"+dy+"px,0)";});
+  }
+  return {
+    move:function(d){dy=d;paint();},
+    finish:function(done){
+      var end=0,i;
+      if(to>from)for(i=from+1;i<=to;i++)end+=info[i].stride;
+      else if(to<from)for(i=to;i<from;i++)end-=info[i].stride;
+      me.block.forEach(function(el){el.style.transition="transform .18s cubic-bezier(.2,.8,.2,1)";el.style.transform=end?"translate3d(0,"+end+"px,0)":"";});
+      setTimeout(function(){
+        var ids=info.map(function(it){return it.el.dataset.drag;});
+        if(to!==from){var id=ids.splice(from,1)[0];ids.splice(to,0,id);}
+        function clean(){container.classList.remove("drag-live");info.forEach(function(it){it.block.forEach(function(el){el.style.transition="";el.style.transform="";el.style.position="";el.style.zIndex="";el.style.willChange="";});});}
+        done(to!==from?ids:null,clean);
+      },185);
+    }
+  };
+}
 function enableDrag(handle,container,onCommit,dragEl){
   dragEl=dragEl||handle;
-  var HOLD=350,SLOP=12,timer=null,active=false,startX=0,startY=0;
-  function isControl(t){return !!(t&&t.closest&&t.closest("button:not(.grip),input"));}
-  function reorderAt(y){
-    var kids=[].slice.call(container.children).filter(function(c){return c!==dragEl&&c.dataset.drag;});
-    for(var i=0;i<kids.length;i++){var r=kids[i].getBoundingClientRect();if(y<r.top+r.height/2){if(kids[i]!==dragEl.nextSibling)container.insertBefore(dragEl,kids[i]);return;}}
-    if(container.lastElementChild!==dragEl)container.appendChild(dragEl);
+  var HOLD=300,SLOP=10,EDGE=80,timer=null,sess=null,startX=0,startY=0,startPage=0,lastY=0,raf=0;
+  function isControl(t){return !!(t&&t.closest&&t.closest("button:not(.grip),input,textarea,select,[contenteditable=true]"));}
+  function start(x,y){startX=x;startY=y;lastY=y;clearTimeout(timer);timer=setTimeout(activate,HOLD);}
+  function activate(){
+    timer=null;if(!dragEl.isConnected)return;
+    startPage=startY+window.scrollY;
+    dragEl.classList.add("dragging");
+    sess=dragSession(container,dragEl);
+    dragHaptic("MEDIUM");
+    raf=requestAnimationFrame(autoScroll);
   }
-  function start(x,y,onActivate){
-    startX=x;startY=y;active=false;clearTimeout(timer);
-    timer=setTimeout(function(){timer=null;active=true;dragEl.classList.add("dragging");if(onActivate)onActivate();},HOLD);
+  function update(){if(sess)sess.move(lastY+window.scrollY-startPage);}
+  // Hold near the top or bottom edge to keep scrolling while dragging a long list.
+  function autoScroll(){
+    if(!sess)return;
+    var v=0,H=window.innerHeight;
+    if(lastY<EDGE)v=-Math.min(14,Math.ceil((EDGE-lastY)/5));
+    else if(lastY>H-EDGE)v=Math.min(14,Math.ceil((lastY-(H-EDGE))/5));
+    if(v){var before=window.scrollY;window.scrollBy(0,v);if(window.scrollY!==before)update();}
+    raf=requestAnimationFrame(autoScroll);
   }
   function moved(x,y){return Math.abs(x-startX)>SLOP||Math.abs(y-startY)>SLOP;}
+  function track(x,y){
+    if(sess){lastY=y;update();return true;}
+    if(timer&&moved(x,y)){clearTimeout(timer);timer=null;}
+    return false;
+  }
   function finish(){
-    clearTimeout(timer);timer=null;
-    if(!active)return;
-    active=false;
-    dragEl.classList.remove("dragging");
+    clearTimeout(timer);timer=null;cancelAnimationFrame(raf);
+    if(!sess)return;
+    var s=sess;sess=null;
     DRAG_SUPPRESS.add(dragEl);DRAG_SUPPRESS.add(handle);
-    onCommit([].slice.call(container.children).filter(function(c){return c.dataset.drag;}).map(function(c){return c.dataset.drag;}));
+    s.finish(function(order,clean){
+      dragEl.classList.remove("dragging");
+      if(!order){clean();return;}
+      // The re-render replaces these nodes in their new order; skip entrance animations so
+      // nothing flickers in.
+      document.documentElement.classList.add("settle");
+      onCommit(order);
+      clean();
+      setTimeout(function(){document.documentElement.classList.remove("settle");},60);
+    });
   }
 
   // Touch (iPhone): iOS fires pointercancel partway through a press-and-hold and then stops
-  // sending pointer events for that finger, so the drag is driven by touch events, which keep
-  // arriving. touchmove is non-passive and registered up front so preventDefault() reliably
-  // stops the page from scrolling once the drag is active.
+  // sending pointer events for that finger, so touch events drive it. touchmove is non-passive
+  // and registered up front so preventDefault() reliably stops the page scrolling mid-drag.
   handle.addEventListener("touchstart",function(e){
     if(e.touches.length!==1||isControl(e.target)){clearTimeout(timer);timer=null;return;}
-    start(e.touches[0].clientX,e.touches[0].clientY,function(){try{if(navigator.vibrate)navigator.vibrate(10);}catch(err){}});
+    start(e.touches[0].clientX,e.touches[0].clientY);
   },{passive:true});
   handle.addEventListener("touchmove",function(e){
     var t=e.touches[0];if(!t)return;
-    if(active){e.preventDefault();reorderAt(t.clientY);return;}
-    if(timer&&moved(t.clientX,t.clientY)){clearTimeout(timer);timer=null;}
+    if(track(t.clientX,t.clientY))e.preventDefault();
   },{passive:false});
   handle.addEventListener("touchend",finish);
   handle.addEventListener("touchcancel",finish);
 
   // Mouse / pen (desktop browsers). Touch pointers are handled above.
   handle.addEventListener("pointerdown",function(ev){
-    if(ev.pointerType==="touch"||isControl(ev.target))return;
+    if(ev.pointerType==="touch"||ev.button!==0||isControl(ev.target))return;
     start(ev.clientX,ev.clientY);
-    function move(e){
-      if(active){e.preventDefault();reorderAt(e.clientY);return;}
-      if(timer&&moved(e.clientX,e.clientY)){clearTimeout(timer);timer=null;}
-    }
+    function move(e){if(track(e.clientX,e.clientY))e.preventDefault();}
     function up(){document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.removeEventListener("pointercancel",up);finish();}
     document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);
   });
@@ -1261,10 +1347,11 @@ function renderTasks(){
         h("button",{class:"act",onclick:function(){toggleFocus(s.id);}},[focusHas(s.id)?"★ unpin focus":"☆ pin to focus"]),
         h("button",{class:"act danger",onclick:function(){delSub(l.id,s.id);}},["× delete"])
       ]);
+      panel.dataset.dragTail="1";
       row.after(panel);more.setAttribute("aria-expanded","true");
     });
     if(subOpen){
-      var sw=h("div",{class:"subs"});
+      var sw=h("div",{class:"subs"});sw.dataset.dragTail="1";
       items.forEach(function(it){
         var t2=h("span",{class:"sub-t"+(it.done?" done":""),title:"tap to rename",onclick:function(){startRename(t2,it.title,true,function(v){renameItem(s.id,it.id,v);});}},[it.title]);
         var subRow=h("div",{class:"sub-row"},[
@@ -1272,7 +1359,9 @@ function renderTasks(){
           t2,
           h("button",{class:"ghost","aria-label":"delete subtask",onclick:function(){delItem(s.id,it.id);}},["×"])
         ]);
-        swipeToDelete(subRow,function(){delItem(s.id,it.id);});
+        subRow.dataset.drag=it.id;
+        enableDrag(subRow,sw,function(order){subItems(s).sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+        swipeToDelete(subRow,function(){delItem(s.id,it.id);},null,true);
         sw.appendChild(subRow);
       });
       var si=h("input",{class:"txt-in sub-in",placeholder:"add a subtask…","data-subin":s.id,onkeydown:function(e){if(e.key==="Enter"){addItem(s.id,si.value);var el=document.querySelector('[data-subin="'+s.id+'"]');if(el)el.focus();}}});
@@ -1902,13 +1991,16 @@ function renderBrandList(app){
     }
     results.appendChild(h("div",{class:"sec-title",style:"margin:4px 2px 12px"},["your brands"]));
     if(!S.brands.length)results.appendChild(h("p",{class:"empty"},["No brands yet \u2014 add your first client below."]));
+    var cardsWrap=h("div");
     S.brands.forEach(function(b,bi){
-      var card=h("div",{class:"glass brand-card lt-"+(bi%5),onclick:function(){scr.brand=b.id;render();}});
+      var card=h("div",{class:"glass brand-card lt-"+(bi%5),onclick:function(){scr.brand=b.id;render();}});card.dataset.drag=b.id;
       card.appendChild(h("div",{class:"nm"},[h("span",{class:"bar"}),b.name]));
       card.appendChild(h("div",{class:"cnt"},[String(b.scripts.length)]));
-      swipeToDelete(card,function(){delBrand(b.id);},"Delete \u201c"+b.name+"\u201d? This removes its scripts, links and notes.");
-      results.appendChild(card);
+      enableDrag(card,cardsWrap,function(order){S.brands.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+      swipeToDelete(card,function(){delBrand(b.id);},"Delete \u201c"+b.name+"\u201d? This removes its scripts, links and notes.",true);
+      cardsWrap.appendChild(card);
     });
+    results.appendChild(cardsWrap);
     results.appendChild(h("button",{class:"newbrand",onclick:newBrandModal},["+ new brand"]));
   }
   search.addEventListener("input",upd);upd();
@@ -2378,6 +2470,7 @@ function onGlobalClick(e){
 
 // \u2500\u2500 payments tracker \u2500\u2500
 var PAY_STATUS=["Pending","Due","Collected"];
+function byPayDateDesc(a,b){var da=a.date||"",db=b.date||"";if(da===db)return 0;if(!da)return 1;if(!db)return -1;return da<db?1:-1;}
 function normPayment(p){p=p||{};return {id:p.id||uid(),brand:p.brand||"",amount:p.amount||"",status:PAY_STATUS.indexOf(p.status)>=0?p.status:"Pending",month:p.month||"",date:p.date||"",notes:p.notes||""};}
 function curPay(id){return S.payments.find(function(x){return x.id===id;});}
 function fmtMonth(m){if(!m)return "";var a=m.split("-");if(a.length<2)return m;var names=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return (names[parseInt(a[1],10)-1]||"")+" "+a[0];}
@@ -2425,12 +2518,12 @@ function renderPayments(){
     app.appendChild(frow);
   }
   var shown=inView.filter(function(x){return !S.payFilter||S.payFilter==="All"||x.status===S.payFilter;});
-  shown=shown.slice().sort(function(a,b){var da=a.date||"",db=b.date||"";if(da===db)return 0;if(!da)return 1;if(!db)return -1;return da<db?1:-1;});
   if(!S.payments.length)app.appendChild(h("p",{class:"empty",style:"margin-top:14px"},["No payments yet \u2014 log your first one below."]));
   else if(!inView.length)app.appendChild(h("p",{class:"empty",style:"margin-top:14px"},["Nothing logged for "+(view==="all"?"any month":fmtMonth(view))+" yet."]));
   else if(!shown.length)app.appendChild(h("p",{class:"empty",style:"margin-top:14px"},["No "+S.payFilter.toLowerCase()+" payments here."]));
+  var payWrap=h("div");app.appendChild(payWrap);
   shown.forEach(function(x){
-    var card=h("div",{class:"glass deal-card lt-"+({collected:3,due:0,pending:2}[String(x.status).toLowerCase()]||2),onclick:function(){paymentEditor(x.id);}});
+    var card=h("div",{class:"glass deal-card lt-"+({collected:3,due:0,pending:2}[String(x.status).toLowerCase()]||2),onclick:function(){paymentEditor(x.id);}});card.dataset.drag=x.id;
     card.appendChild(h("div",{class:"deal-top"},[
       h("div",{class:"deal-brand"},[x.brand||"Untitled"]),
       h("div",{class:"deal-rate"},[x.amount||"\u2014"])
@@ -2439,8 +2532,9 @@ function renderPayments(){
     var when=[]; if(x.month)when.push(fmtMonth(x.month)); if(x.date)when.push(fmtDate(x.date));
     if(when.length)card.appendChild(h("div",{class:"deal-line"},["\uD83D\uDCC5 "+when.join(" \u00b7 ")]));
     if(x.notes)card.appendChild(h("div",{class:"deal-line"},["\uD83D\uDCDD "+x.notes]));
-    swipeToDelete(card,function(){delPayment(x.id);},"Delete this payment?");
-    app.appendChild(card);
+    enableDrag(card,payWrap,function(order){reorderSubset(S.payments,order);save();render();});
+    swipeToDelete(card,function(){delPayment(x.id);},"Delete this payment?",true);
+    payWrap.appendChild(card);
   });
   app.appendChild(h("button",{class:"newbrand",style:"margin-top:6px",onclick:newPayment},["+ new payment"]));
 }
@@ -2509,8 +2603,9 @@ function renderDeals(){
     ])
   ]));
   if(!S.deals.length)app.appendChild(h("p",{class:"empty",style:"margin-top:14px"},["No deals yet \u2014 add your first brand below."]));
+  var dealsWrap=h("div");app.appendChild(dealsWrap);
   S.deals.forEach(function(d,di){
-    var card=h("div",{class:"glass deal-card lt-"+((di+2)%5),onclick:function(){dealEditor(d.id);}});
+    var card=h("div",{class:"glass deal-card lt-"+((di+2)%5),onclick:function(){dealEditor(d.id);}});card.dataset.drag=d.id;
     card.appendChild(h("div",{class:"deal-top"},[
       h("div",{class:"deal-brand"},[d.brand||"Untitled brand"]),
       h("div",{class:"deal-rate"},[d.perCycle||"\u2014"])
@@ -2520,8 +2615,9 @@ function renderDeals(){
     var handles=(d.platforms?d.platforms.split(",").map(function(x){return x.trim();}).filter(Boolean):[]).map(function(pn){var ac=d.accounts&&d.accounts[pn];var u=ac&&ac.user?ac.user.trim():"";return u?pn+" "+(u.charAt(0)==="@"?u:"@"+u):pn;});
     if(handles.length)meta.push(handles.join(", "));if(d.bonus)meta.push("\u2726 "+d.bonus);if(d.start)meta.push("from "+fmtDate(d.start));
     if(meta.length)card.appendChild(h("div",{class:"deal-line deal-meta1"},[meta.join(" \u00b7 ")]));
-    swipeToDelete(card,function(){delDeal(d.id);},"Delete this deal?");
-    app.appendChild(card);
+    enableDrag(card,dealsWrap,function(order){S.deals.sort(function(a,b){return order.indexOf(a.id)-order.indexOf(b.id);});save();render();});
+    swipeToDelete(card,function(){delDeal(d.id);},"Delete this deal?",true);
+    dealsWrap.appendChild(card);
   });
   app.appendChild(h("button",{class:"newbrand",style:"margin-top:6px",onclick:newDeal},["+ new deal"]));
 }
@@ -2804,13 +2900,15 @@ function renderCalendar(){
   if(!sel.personal.length&&!sel.payments.length&&!sel.batch.length){
     panel.appendChild(h("p",{class:"empty",style:"padding:2px 4px 8px"},["Nothing planned for this day yet."]));
   }
+  var calWrap=h("div");panel.appendChild(calWrap);
   sel.personal.forEach(function(it){
-    var row=h("div",{class:"cal-row cal-row-check"+(it.done?" done":"")});
+    var row=h("div",{class:"cal-row cal-row-check"+(it.done?" done":"")});row.dataset.drag=it.id;
     row.appendChild(h("button",{class:"cal-check"+(it.done?" on":""),onclick:function(){calToggleItem(it.id);}},[it.done?"✓":""]));
     row.appendChild(h("div",{class:"cal-row-title"},[it.title]));
     row.appendChild(h("button",{class:"cal-del",onclick:function(){calDelItem(it.id);}},["×"]));
-    swipeToDelete(row,function(){calDelItem(it.id);});
-    panel.appendChild(row);
+    enableDrag(row,calWrap,function(order){reorderSubset(S.calendarItems,order);save();render();});
+    swipeToDelete(row,function(){calDelItem(it.id);},null,true);
+    calWrap.appendChild(row);
   });
   var ti=h("input",{class:"txt-in",placeholder:"plan something for "+selLabel+"…",onkeydown:function(e){if(e.key==="Enter"){calAddItem(calSel,ti.value);ti.value="";}}});
   panel.appendChild(h("div",{class:"add-row"},[ti,h("button",{class:"add-btn",onclick:function(){calAddItem(calSel,ti.value);ti.value="";}},["+"])]));
