@@ -48,8 +48,8 @@ html[data-theme="dark"] .plat-chip{background:rgba(255,255,255,.06);border-color
 main{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:40px 18px 72px}
 @media (min-width:900px){main{max-width:94vw}}
 @media (min-width:1400px){main{max-width:1320px}}
-@media (min-width:900px){#lists{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:start}}
-@media (min-width:900px){#lists .list{margin-bottom:0}}
+@media (min-width:900px){#lists .sec-lists{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:start;margin-bottom:18px}}
+@media (min-width:900px){#lists .sec-lists .list{margin-bottom:0}#lists .newlist{max-width:560px}}
 .glass{background:var(--glass-bg);backdrop-filter:blur(22px) saturate(165%);-webkit-backdrop-filter:blur(22px) saturate(165%);border:1px solid var(--glass-bd);box-shadow:var(--glass-sh)}
 .xh{display:inline-block;vertical-align:-2px;filter:drop-shadow(0 1px 2px rgba(var(--s2),.8))}
 .chandelier{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:13px;height:60px;margin:-6px 0 4px;pointer-events:none}
@@ -336,7 +336,8 @@ body.script-editing .script-body,body.script-editing .notes-area{background:#fff
 .search-in{width:100%;height:50px;padding:0 16px 0 44px;border-radius:16px;font-family:Inter;font-size:12.2px;color:var(--ink);background:var(--field);border:1px solid var(--glass-bd);outline:none}
 .search-in::placeholder{color:var(--faint)}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:8px}
-.cal-nav-btn{width:36px;height:36px;border-radius:12px;font-size:16px;line-height:1;flex-shrink:0}
+.cal-nav-btn{width:36px;height:36px;border-radius:12px;font-size:16px;line-height:1;flex:0 0 36px}
+@media (min-width:900px){.cal-body{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}.cal-body .cal-grid{margin-top:0}.cal-body .cal-cell{aspect-ratio:auto;height:78px}.cal-body .cal-day-panel{margin-top:0!important;position:sticky;top:18px}}
 .cal-nav-label{font-family:DM Sans,Outfit;font-weight:600;font-size:14.5px;color:var(--ink)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
 .cal-dow{text-align:center;font-family:DM Sans,Outfit;font-size:9.8px;font-weight:600;color:var(--muted);letter-spacing:.3px;padding-bottom:2px}
@@ -2997,7 +2998,8 @@ function renderCalendar(){
     if(info.personal.length)cell.appendChild(h("div",{class:"cal-dot cal-dot-personal"}));
     grid.appendChild(cell);
   }
-  app.appendChild(grid);
+  var calBody=h("div",{class:"cal-body"});app.appendChild(calBody);
+  calBody.appendChild(grid);
 
   var sel=calItemsForDate(calSel),selLabel=fmtDate(calSel),selCount=calCount(sel);
   var panel=h("div",{class:"glass card cal-day-panel",style:"margin-top:14px"});
@@ -3026,7 +3028,7 @@ function renderCalendar(){
   });
   var ti=h("input",{class:"txt-in",placeholder:"plan something for "+selLabel+"…",onkeydown:function(e){if(e.key==="Enter"){calAddItem(calSel,ti.value);ti.value="";}}});
   panel.appendChild(h("div",{class:"add-row"},[ti,h("button",{class:"add-btn",onclick:function(){calAddItem(calSel,ti.value);ti.value="";}},["+"])]));
-  app.appendChild(panel);
+  calBody.appendChild(panel);
   app.appendChild(h("p",{class:"foot"},["tap a day to plan something · payments due and batching days show up automatically"]));
 }
 
