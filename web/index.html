@@ -150,6 +150,10 @@ html[data-theme="dark"] .row.dragging{background:rgba(28,30,34,.78)}
 .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .preset{flex-grow:1;flex-basis:30%;height:42px;border-radius:12px;cursor:pointer;font-family:DM Sans,Outfit;font-size:10.8px;color:var(--accent);background:var(--field);border:1px solid var(--glass-bd);box-shadow:inset 0 1px 1px rgba(255,255,255,.5)}
 .segs{display:flex;gap:6px}
+.ed-every{display:flex;align-items:center;gap:8px;margin-top:10px}
+.ed-every-l{font-family:DM Sans,Outfit;font-size:13px;color:var(--muted)}
+.ed-every-n{flex:0 0 84px;text-align:center}
+.ed-every-u{flex:1;-webkit-appearance:none;appearance:none}
 .seg{flex:1;height:46px;border-radius:13px;cursor:pointer;font-family:DM Sans,Outfit;font-size:12.2px;color:var(--muted);background:var(--field);border:1px solid var(--glass-bd);box-shadow:inset 0 1px 1px rgba(255,255,255,.5);transition:all .2s}
 .seg.on{color:var(--accent);font-weight:500;background:linear-gradient(135deg,rgba(var(--s1),.6),rgba(var(--s2),.6));border:1px solid rgba(255,255,255,.7)}
 .ed-note{font-family:Inter;font-size:10.3px;color:var(--faint);margin:8px 0 0;line-height:1.5}
@@ -816,10 +820,9 @@ var nowHM=function(){return new Date().toTimeString().slice(0,5);};
 function plusMin(m){var d=new Date();d.setMinutes(d.getMinutes()+m);return d.toTimeString().slice(0,5);}
 function toMin(t){var p=t.split(":");return (+p[0])*60+(+p[1]);}
 function inWindow(t,s,e){if(!s||!e)return true;return s<=e?(t>=s&&t<=e):(t>=s||t<=e);}
-function everyLabel(n){return !n?"":(n>=60?"1h":n+"m");}
+function everyLabel(n){if(!n)return "";if(n<60)return n+"m";var hh=Math.floor(n/60),mm=n%60;return hh+"h"+(mm?" "+mm+"m":"");}
 function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var EMOJIS=["✿","🌸","🌷","🎀","🩰","☁️","🫧","💗","✨","🌙","⭐","🎬","📸","💻","📝","☕","🧋","🍓","🧘‍♀️","💄","🛍️","📚","🎧","🌿"];
-var EVERY=[{l:"Once",v:0},{l:"15m",v:15},{l:"30m",v:30},{l:"1h",v:60}];
 var PRESETS=[{l:"8am once",p:{remind:"08:00",every:0,until:""}},{l:"30m · 9–5",p:{remind:"09:00",every:30,until:"17:00"}},{l:"1h · 9–6",p:{remind:"09:00",every:60,until:"18:00"}},{l:"1h · 6–10pm",p:{remind:"18:00",every:60,until:"22:00"}},{l:"30m · 6–9pm",p:{remind:"18:00",every:30,until:"21:00"}},{l:"8pm once",p:{remind:"20:00",every:0,until:""}}];
 
 function blankSub(t){return {id:uid(),title:t,done:false,remind:"",every:0,until:"",snooze:"",fired:"",repeat:false,target:1,count:0,items:[],script:null};}
@@ -1853,14 +1856,27 @@ function openEditor(target){
     body.appendChild(h("p",{class:"ed-sub"},[target.allLid?("All tasks in "+l.title):s.title]));
     body.appendChild(h("label",{class:"ed-lab"},["start time"]));
     body.appendChild(h("input",{class:"ed-time",type:"time",value:s.remind,onchange:function(e){applyReminderTo(target,{remind:e.target.value});s.remind=e.target.value;}}));
-    body.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["keep reminding me"]));
+    body.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["repeat"]));
+    function setEvery(v){var p={every:v};if(!v)p.until="";applyReminderTo(target,p);Object.assign(s,p);rebuild();}
     var segs=h("div",{class:"segs"});
-    EVERY.forEach(function(o){segs.appendChild(h("button",{class:"seg"+(s.every===o.v?" on":""),onclick:function(){var p={every:o.v};if(o.v===0)p.until="";applyReminderTo(target,p);Object.assign(s,p);rebuild();}},[o.l]));});
+    segs.appendChild(h("button",{class:"seg"+(!s.every?" on":""),onclick:function(){setEvery(0);}},["once"]));
+    segs.appendChild(h("button",{class:"seg"+(s.every>0?" on":""),onclick:function(){if(!s.every)setEvery(60);}},["repeat"]));
     body.appendChild(segs);
+    if(s.every>0){
+      // any interval you like: a number plus minutes or hours (stored in minutes, 5 min to 23 h)
+      var inHours=s.every%60===0;
+      var num=h("input",{class:"ed-time ed-every-n",type:"number",inputmode:"numeric",min:"1",step:"1",value:String(inHours?s.every/60:s.every),"aria-label":"repeat every"});
+      var unit=h("select",{class:"ed-time ed-every-u","aria-label":"unit"},[h("option",{value:"m"},["minutes"]),h("option",{value:"h"},["hours"])]);
+      unit.value=inHours?"h":"m";
+      function commit(){var n=parseInt(num.value,10);if(!(n>0)){num.value=String(inHours?s.every/60:s.every);return;}var mins=Math.max(5,Math.min(1380,unit.value==="h"?n*60:n));if(mins!==s.every)setEvery(mins);else rebuild();}
+      num.addEventListener("change",commit);unit.addEventListener("change",commit);
+      num.addEventListener("keydown",function(e){if(e.key==="Enter")num.blur();});
+      body.appendChild(h("div",{class:"ed-every"},[h("span",{class:"ed-every-l"},["every"]),num,unit]));
+    }
     if(s.every>0){
       body.appendChild(h("label",{class:"ed-lab",style:"margin-top:16px"},["until (optional — stops nudging)"]));
       body.appendChild(h("input",{class:"ed-time",type:"time",value:s.until,onchange:function(e){applyReminderTo(target,{until:e.target.value});s.until=e.target.value;}}));
-      body.appendChild(h("p",{class:"ed-note"},["Nudges every "+everyLabel(s.every)+" from "+(s.remind||"start")+(s.until?" until "+s.until:"")+", or until you tick it off."]));
+      body.appendChild(h("p",{class:"ed-note"},["Nudges every "+everyLabel(s.every)+" from "+(s.remind||"the start time")+" until "+(s.until||S.win.end||"the end of the day")+" each day, or until you tick it off."]));
     }
     body.appendChild(h("div",{class:"ed-btns"},[
       h("button",{class:"soft-btn",onclick:function(){var p={remind:"",every:0,until:"",snooze:""};applyReminderTo(target,p);Object.assign(s,p);rebuild();}},["clear"]),
