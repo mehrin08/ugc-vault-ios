@@ -91,10 +91,11 @@ prices (e.g. £5.99, €6.99, CA$8.99, A$9.99).
 | Contact Info → **Email Address** | App Functionality | Yes | No |
 | Contact Info → **Name** (only if users add one) | App Functionality | Yes | No |
 | User Content → **Other User Content** (tasks, scripts, deals, payments) | App Functionality | Yes | No |
+| Financial Info → **Other Financial Info** (deal amounts, payments received, earnings goals) | App Functionality | Yes | No |
 | Identifiers → **User ID** (Supabase account ID) | App Functionality | Yes | No |
 
-Result shown on the store: **Data Linked to You: Contact Info, User Content,
-Identifiers**, with **Data Used to Track You: none**. This matches
+Result shown on the store: **Data Linked to You: Contact Info, Financial Info,
+User Content, Identifiers**, with **Data Used to Track You: none**. This matches
 `privacy-policy.md`.
 
 ## App Review Information
