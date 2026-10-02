@@ -30,14 +30,18 @@ in batches, all in one calm, pretty place.
 
 FEATURES
 • Monthly earnings-goal ring showing earned, in-pipeline, and to-go
-• Daily and batching task lists by brand, which fold away until you need them
+• Task lists by brand, in sections you name yourself (daily, batching, or your own)
 • Count sets like "post 5 videos" and pin today's focus
 • Scripts by brand, with hooks, captions and reference links
 • Brand deals and payments tracker, month by month
+• Calendar for shoots, deadlines and payment due dates
+• Press and hold to reorder anything, swipe left to delete
+• Pick your own theme color, or keep each tab's colors
 
 REMINDERS THAT KEEP YOU ON TRACK
-• Set a reminder on any task, once or every 15, 30 or 60 minutes until it's done
-• Real iPhone notifications, even when the app is closed
+• Set a reminder on any task, once or repeating at any interval you choose
+  (every 30 minutes, every 6 hours…) until it's done
+• Real iPhone notifications with a soft sparkle sound, even when the app is closed
 • Snooze or tick off a task right from the reminder
 
 SYNCED AND PRIVATE
@@ -60,7 +64,7 @@ https://thriving-macaron-6a97f3.netlify.app
 2026 Mehrin Reza Rim
 
 ### Version
-1.0.0 (Build 1)
+1.0.0 (Build 5)
 
 ## Availability (App Store Connect → Pricing and Availability)
 Turn off **"Make available in all countries"** and select only these 18 countries:
@@ -94,9 +98,9 @@ Identifiers**, with **Data Used to Track You: none**. This matches
 `privacy-policy.md`.
 
 ## App Review Information
-- Sign-in required: **Yes**. Create a demo account in the app first (for example
-  `review@ugcvault.app` with a password you choose), add a few sample lists,
-  tasks and deals, and enter the email and password here.
+- Sign-in required: **Yes**. Demo account: `ugcrims+review@gmail.com` (already filled
+  with sample lists, tasks, scripts, deals, payments, calendar plans and notes).
+  Type its password into App Store Connect yourself.
 - Contact: Mehrin Reza Rim · ugcrims@gmail.com · (your phone number)
 - Notes:
 
@@ -105,12 +109,11 @@ Identifiers**, with **Data Used to Track You: none**. This matches
 > Please sign in with the demo account above. It already has sample data.
 >
 > Native iOS features to test:
-> 1. Local notifications: open the menu (top right) → "phone notifications" →
->    "turn on notifications" and allow. In the Tasks tab, tap ⋯ next to a task →
->    "reminder", and set a time a minute or two ahead. The notification arrives
->    even if the app is closed. "daily & weekly nudges" in the same screen adds
->    a daily task reminder, a Sunday planning reminder and a Friday payment
->    check-in.
+> 1. Local notifications: on first launch iOS asks to allow notifications. In
+>    the Tasks tab, tap ⋯ next to a task → "reminder" and set a time a minute or
+>    two ahead (or choose "repeat" and any interval). The notification arrives on
+>    the lock screen even if the app is closed. Menu (top right) → "phone
+>    notifications" opens the daily, Sunday and Friday nudges.
 > 2. Haptic feedback when ticking off tasks and tapping buttons.
 > 3. Account deletion: menu → account → "delete account" permanently deletes
 >    the account and its data.
@@ -126,16 +129,19 @@ UGC Vault helps UGC creators track brand deals, payments, earnings goals and
 weekly content batching in one dashboard.
 
 ### What to Test
-Sign up, add a few lists and tasks, and open and close them. Set a reminder
-on a task (⋯ → reminder) after turning on phone notifications in the menu, and
+Sign up, add a few lists and tasks, and open and close them. Allow notifications
+when asked, set a reminder on a task (⋯ → reminder), and
 check it arrives with the app closed. Tell us anything that looks off,
 confusing or slow.
 
 ### Feedback Email
 ugcrims@gmail.com
 
-## Screenshots needed
-- iPhone 6.9" (1320 × 2868): 3–10 images. Use the iPhone 16 Pro Max simulator and press ⌘S.
+## Screenshots
+- Ready: `~/Desktop/DEKSTOP/AppStoreScreenshots/v1.0/` — 6 images at 1320 × 2868
+  (iPhone 6.9"): home, tasks, reminders, script, deals, calendar.
+- Retake: iPhone 16 Pro Max simulator, signed in to the demo account,
+  `xcrun simctl status_bar <device> override --time 9:41`, then ⌘S.
 - Not needed for iPad: the app is set to iPhone only.
 - Tip: take them signed in to the demo account with sample data. Include the
   tasks tab, the home dashboard, a script, notes, and the phone notifications screen.
